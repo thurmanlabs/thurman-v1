@@ -55,13 +55,27 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 		IERC20(_underlyingAsset).transfer(to, amount);
 	}
 
+	function transferUnderlyingToExchequerSafe(uint256 amount) external virtual override onlyPolemarch {
+		IERC20(_underlyingAsset).transfer(_exchequerSafe, amount);
+	}
+
 	function availableUnderlyingSupply() public view returns (uint256) {
 		return IERC20(_underlyingAsset).balanceOf(address(this));
 	}
 
-	// function withdrawableTotalSupply(){} // should be the total supply minus the sum of the borrowMaxes for LoCs
+	function withdrawableTotalSupply(uint256 totalDebt) public view returns (uint256) {
+		uint256 underlying = availableUnderlyingSupply();
+		return underlying - totalDebt;
+	} // should be the total supply minus the sum of the borrowMaxes for LoCs
 
-	// function withdrawableSupply(address user){} // times user's relative contribution to total supply
+	function withdrawableBalance(
+		address user,
+		uint256 totalDebt
+	) public view returns (uint256) {
+		uint256 availableSupply = withdrawableTotalSupply(totalDebt);
+		uint256 currTotalSupply = totalSupply();
+		return balanceOf(user).rayMul((availableSupply).rayDiv(currTotalSupply));
+	} // times user's relative contribution to total supply
 
 	function balanceOf(address user)
 		public 
@@ -85,6 +99,10 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 		}
 
 		return scaledSupply.rayMul(POLEMARCH.getNormalizedReturn(_underlyingAsset));
+	}
+
+	function getExchequerSafe() public view returns (address) {
+		return _exchequerSafe;
 	}
 }
 

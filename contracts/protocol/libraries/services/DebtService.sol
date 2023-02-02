@@ -79,6 +79,8 @@ library DebtService {
 		linesOfCredit[borrower].id = uint128(linesOfCreditCount + 1);
 		linesOfCredit[borrower].deliquent = false;
 		exchequer.totalDebt += borrowMax;
+		uint256 protocolFee = exchequer.calculateProtocolFee(borrowMax, termDays);
+		ISToken(exchequer.sTokenAddress).transferUnderlyingToExchequerSafe(protocolFee);
 		emit CreateLineOfCredit(
 			linesOfCredit[borrower].id,
 			rate,

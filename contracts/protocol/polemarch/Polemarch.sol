@@ -123,5 +123,13 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 	function setExchequerBorrowing(address underlyingAsset, bool enabled) external onlyOwner {
 		ConfigurationService.setExchequerBorrowing(_exchequers, underlyingAsset, enabled);
 	}
+
+	function setExchequerActive(address underlyingAsset, bool active) external onlyOwner {
+		ConfigurationService.setExchequerActive(_exchequers, underlyingAsset, active);
+	}
+
+	function setSupplyCap(address underlyingAsset, uint256 supplyCap) external onlyOwner {
+		ConfigurationService.setSupplyCap(_exchequers, underlyingAsset, supplyCap);
+	}
 	// function closeLineOfCredit(){}
 }

@@ -36,5 +36,11 @@ interface IPolemarch {
 
 	function getLineOfCredit(address borrower) external view returns (Types.LineOfCredit memory);
 
-	function getNormalizedReturn(address underlyingAsset) external view returns (uint256); 
+	function getNormalizedReturn(address underlyingAsset) external view returns (uint256);
+
+	function setExchequerBorrowing(address underlyingAsset, bool enabled) external;
+
+	function setExchequerActive(address underlyingAsset, bool active) external;
+
+	function setSupplyCap(address underlyingAsset, uint256 supplyCap) external;
 }

@@ -47,7 +47,16 @@ library SupplyService {
 		uint256 userBalance = ISToken(exchequer.sTokenAddress).scaledBalanceOf(msg.sender).rayMul(
 			exchequer.supplyIndex
 		);
-		StrategusService.guardWithdraw(exchequer, userBalance, amount);
+		uint256 withdrawableBalance = ISToken(exchequer.sTokenAddress).withdrawableBalance(
+			msg.sender,
+			exchequer.totalDebt
+		);
+		StrategusService.guardWithdraw(
+			exchequer, 
+			userBalance, 
+			withdrawableBalance, 
+			amount
+		);
 
 		ISToken(exchequer.sTokenAddress).burn(
 			msg.sender,

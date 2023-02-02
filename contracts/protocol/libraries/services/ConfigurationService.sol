@@ -15,4 +15,22 @@ library ConfigurationService {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
 		exchequer.borrowingEnabled = enabled;
 	}
+
+	function setExchequerActive(
+		mapping(address => Types.Exchequer) storage exchequers,
+		address underlyingAsset, 
+		bool active
+	) internal {
+		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
+		exchequer.active = active;
+	}
+
+	function setSupplyCap(
+		mapping(address => Types.Exchequer) storage exchequers,
+		address underlyingAsset,
+		uint256 supplyCap
+	) internal {
+		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
+		exchequer.supplyCap = supplyCap;
+	}
 }

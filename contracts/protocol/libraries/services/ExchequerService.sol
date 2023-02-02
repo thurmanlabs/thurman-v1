@@ -86,6 +86,24 @@ library ExchequerService {
 		exchequer.lastUpdateTimestamp = uint40(block.timestamp);
 	}
 
+	// function _accrueToExchequerSafe(Types.Exchequer storage exchequer) internal {
+	// 	if (exchequer.exchequerFactor == 0) {
+	// 		return;
+	// 	}
+
+
+	// }
+
+	function calculateProtocolFee(
+		Types.Exchequer storage exchequer,
+		uint256 borrowMax,
+		uint40 termDays
+	) internal view returns (uint256) {
+		uint256 termSeconds = uint256(termDays) * 1 days;
+		return uint256(borrowMax.rayMul(uint256(exchequer.protocolBorrowFee)).
+			rayMul((termSeconds).rayDiv(MathUtils.SECONDS_PER_YEAR)));
+	}
+
 	function _getSupplyRate(
 		uint256 totalDebt, 
 		uint256 totalSupply,
