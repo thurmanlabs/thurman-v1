@@ -75,6 +75,7 @@ describe("Polemarch", function() {
       await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
       await weth.approve(polemarch.address, parseEther("0.3"));
       await polemarch.supply(weth.address, parseEther("0.2"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
       await polemarch.createLineOfCredit(
         deployer.address,
         weth.address,

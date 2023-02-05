@@ -38,7 +38,7 @@ library DebtService {
 		uint256 amount
 	);
 
-	event Deliquent(
+	event Delinquent(
 		uint128 indexed lineOfCreditId,
 		address indexed borrower,
 		address indexed exchequer,
@@ -151,7 +151,7 @@ library DebtService {
 		);
 	}
 
-	function markDeliquent(
+	function markDelinquent(
 		mapping(address => Types.Exchequer) storage exchequers,
 		mapping(address => Types.LineOfCredit) storage linesOfCredit,
 		address borrower,
@@ -159,14 +159,14 @@ library DebtService {
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
 		// exchequer.update();
-		StrategusService.guardDeliquency(
+		StrategusService.guardDelinquency(
 			exchequer,
 			linesOfCredit,
 			borrower
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
-		emit Deliquent(
+		emit Delinquent(
 			linesOfCredit[borrower].id,
 			borrower,
 			underlyingAsset,

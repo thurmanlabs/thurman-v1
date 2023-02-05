@@ -33,4 +33,13 @@ library ConfigurationService {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
 		exchequer.supplyCap = supplyCap;
 	}
+
+	function setBorrowCap(
+		mapping(address => Types.Exchequer) storage exchequers,
+		address underlyingAsset,
+		uint256 borrowCap
+	) internal {
+		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
+		exchequer.borrowCap = borrowCap;
+	}
 }

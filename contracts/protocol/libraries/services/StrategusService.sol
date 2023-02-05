@@ -62,8 +62,10 @@ library StrategusService {
 		address borrower, 
 		uint256 borrowMax
 	) internal view {
+		require(linesOfCredit[borrower].deliquent == false, "USER_HAS_DELIQUENT_DEBT");
 		require(borrowMax != 0, "INVALID_BORROW_MAX");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
+		require(exchequer.borrowingEnabled, "BORROWING_NOT_ENABLED");
 		// add requirement using debt tokens for the borrow cap
 		require(IERC20(underlyingAsset).balanceOf(exchequer.sTokenAddress) >= borrowMax, 
 			"NOT_ENOUGH_UNDERLYING_ASSET_BALANCE"
@@ -72,7 +74,6 @@ library StrategusService {
 			"EXCHEQUER_MUST_STAY_BELOW_BORROW_CAP"
 		);
 		require(linesOfCredit[borrower].underlyingAsset == address(0), "USER_ALREADY_HAS_BORROW_POSITION");
-		require(linesOfCredit[borrower].deliquent == false, "USER_HAS_DELIQUENT_DEBT");
 	}
 
 	function guardBorrow(
@@ -85,11 +86,11 @@ library StrategusService {
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(exchequer.borrowingEnabled, "BORROWING_NOT_ENABLED");
 		require(linesOfCredit[borrower].borrowMax != 0, "USER_DOES_NOT_HAVE_LINE_OF_CREDIT");
+		require(linesOfCredit[borrower].deliquent == false, "USER_HAS_DELIQUENT_DEBT");
 		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) + amount <= linesOfCredit[borrower].borrowMax,
 			"USER_CANNOT_BORROW_OVER_MAX_LIMIT"
 		);
 		require(block.timestamp < linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_EXPIRED");
-		require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
 	}
 
 	function guardRepay(
@@ -101,11 +102,11 @@ library StrategusService {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(linesOfCredit[borrower].borrowMax != 0, "USER_DOES_NOT_HAVE_LINE_OF_CREDIT");
-		require(block.timestamp < linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_EXPIRED");
 		require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
+		require(block.timestamp < linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_EXPIRED");
 	}
 
-	function guardDeliquency(
+	function guardDelinquency(
 		Types.Exchequer storage exchequer,
 		mapping(address => Types.LineOfCredit) storage linesOfCredit,
 		address borrower

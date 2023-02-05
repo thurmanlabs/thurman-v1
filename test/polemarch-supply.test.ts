@@ -94,10 +94,11 @@ describe("polemarch-supply", function() {
 
     it("reverts when user requests to withdraw more than their proportional available supply", 
       async () => {
-        await weth.deposit({ value: parseEther("0.5") });
+        await weth.deposit({ value: parseEther("1.0") });
         await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
         await weth.approve(polemarch.address, parseEther("0.5"));
         await polemarch.supply(weth.address, parseEther("0.5"));
+        await polemarch.setExchequerBorrowing(weth.address, true);
         await polemarch.createLineOfCredit(
           deployer.address,
           weth.address,
@@ -105,6 +106,7 @@ describe("polemarch-supply", function() {
           parseEther("0.05"), 
           14
         );
+        await weth.approve(polemarch.address, parseEther("0.3"));
         await expect(polemarch.withdraw(weth.address, parseEther("0.3"))).to.be.revertedWith(
           "WITHDRAWABLE_BALANCE_TOO_LOW"
         );

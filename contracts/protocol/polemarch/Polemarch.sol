@@ -106,6 +106,15 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		);
 	}
 
+	function markDelinquent(address underlyingAsset, address borrower) public virtual override {
+		DebtService.markDelinquent(
+			_exchequers, 
+			_linesOfCredit, 
+			borrower, 
+			underlyingAsset
+		);
+	}
+
 	function getLineOfCredit(address borrower) external view returns (Types.LineOfCredit memory) {
 		return _linesOfCredit[borrower];
 	}
@@ -130,6 +139,10 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 
 	function setSupplyCap(address underlyingAsset, uint256 supplyCap) external onlyOwner {
 		ConfigurationService.setSupplyCap(_exchequers, underlyingAsset, supplyCap);
+	}
+
+	function setBorrowCap(address underlyingAsset, uint256 borrowCap) external onlyOwner {
+		ConfigurationService.setBorrowCap(_exchequers, underlyingAsset, borrowCap);
 	}
 	// function closeLineOfCredit(){}
 }

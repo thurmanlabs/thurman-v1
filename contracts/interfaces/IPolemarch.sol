@@ -6,6 +6,27 @@ import {Types} from "../protocol/libraries/types/Types.sol";
 interface IPolemarch {
 	event Supply(address indexed exchequer, address indexed user, uint256 amount);
 	event Withdraw(address indexed exchequer, address indexed user, uint256 amount);
+	event CreateLineOfCredit(
+		uint128 indexed id,
+		uint128 rate,
+		address indexed borrower,
+		address indexed exchequer,
+		uint256 borrowMax,
+		uint40 expirationTimestamp
+	);
+	event Borrow(
+		uint128 indexed lineOfCreditId,
+		uint128 rate,
+		address indexed borrower,
+		address indexed exchequer,
+		uint256 amount
+	);
+	event Repay(
+		uint128 indexed lineOfCreditId,
+		address indexed borrower,
+		address indexed exchequer,
+		uint256 amount
+	);
 
 	function supply(address underlyingAsset, uint256 amount) external;
 	
@@ -22,6 +43,8 @@ interface IPolemarch {
 	function borrow(address underlyingAsset, uint256 amount) external;
 
 	function repay(address underlyingAsset, uint256 amount) external;
+
+	function markDelinquent(address underlyingAsset, address borrower) external;
 
 	function addExchequer(
 		address underlyingAsset, 
@@ -43,4 +66,6 @@ interface IPolemarch {
 	function setExchequerActive(address underlyingAsset, bool active) external;
 
 	function setSupplyCap(address underlyingAsset, uint256 supplyCap) external;
+
+	function setBorrowCap(address underlyingAsset, uint256 borrowCap) external;
 }
