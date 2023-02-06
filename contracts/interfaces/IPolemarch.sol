@@ -28,6 +28,21 @@ interface IPolemarch {
 		uint256 amount
 	);
 
+	event Delinquent(
+		uint128 indexed lineOfCreditId,
+		address indexed borrower,
+		address indexed exchequer,
+		uint256 remainingBalance,
+		uint40 expirationTimestamp
+	);
+
+	event CloseLineOfCredit(
+		uint128 indexed lineOfCreditId,
+		address indexed borrower,
+		address indexed exchequer,
+		uint40 expirationTimestamp
+	);
+
 	function supply(address underlyingAsset, uint256 amount) external;
 	
 	function withdraw(address underlyingAsset, uint256 amount) external;
@@ -45,6 +60,8 @@ interface IPolemarch {
 	function repay(address underlyingAsset, uint256 amount) external;
 
 	function markDelinquent(address underlyingAsset, address borrower) external;
+
+	function closeLineOfCredit(address underlyingAsset, address borrower) external;
 
 	function addExchequer(
 		address underlyingAsset, 

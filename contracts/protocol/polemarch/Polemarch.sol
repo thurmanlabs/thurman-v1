@@ -115,6 +115,15 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		);
 	}
 
+	function closeLineOfCredit(address underlyingAsset, address borrower) public virtual override {
+		DebtService.closeLineOfCredit(
+			_exchequers,
+			_linesOfCredit,
+			borrower,
+			underlyingAsset
+		);
+	}
+
 	function getLineOfCredit(address borrower) external view returns (Types.LineOfCredit memory) {
 		return _linesOfCredit[borrower];
 	}

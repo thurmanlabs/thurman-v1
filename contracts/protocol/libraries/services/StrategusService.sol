@@ -112,7 +112,7 @@ library StrategusService {
 		address borrower
 	) internal view {
 		require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
-		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) >= 0, "USER_DEBT_BALANCE_IS_ZERO");
+		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) > 0, "USER_DEBT_BALANCE_IS_ZERO");
 	}
 
 	function guardCloseLineOfCredit(

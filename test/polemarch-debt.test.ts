@@ -436,6 +436,193 @@ describe("polemarch-debt", function() {
         .to.emit(polemarch, "Repay")
         .withArgs(loc.id, deployer.address, weth.address, parseEther("0.04")
       );
+    });
+  });
+
+  describe("debt-service mark-delinquent", () => {
+    it("reverts when a line of credit has not expired", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await expect(polemarch.connect(users[0]).markDelinquent(weth.address, deployer.address))
+        .to.be.revertedWith(
+          "LINE_OF_CREDIT_HAS_NOT_EXPIRED"
+      );
+    });
+
+    it("reverts when the user balance is zero", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      const dWETHBalance = await dWETH.balanceOf(deployer.address);
+      await weth.approve(polemarch.address, dWETHBalance);
+      await polemarch.repay(weth.address, dWETHBalance);
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await expect(polemarch.connect(users[0]).markDelinquent(weth.address, deployer.address))
+        .to.be.revertedWith(
+          "USER_DEBT_BALANCE_IS_ZERO"
+      );
+    });
+
+    it("emits a delinquent event", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      const loc: Types.LineOfCreditStruct = await polemarch.getLineOfCredit(deployer.address);
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      const dWETHBalance = await dWETH.balanceOf(deployer.address);
+      await expect(polemarch.connect(users[0]).markDelinquent(weth.address, deployer.address))
+        .to.emit(polemarch, "Delinquent")
+        .withArgs(
+          loc.id,
+          deployer.address,
+          weth.address,
+          dWETHBalance,
+          loc.expirationTimestamp
+        );
+    });
+  });
+
+  describe("debt-service close-line-of-credit", () => {
+    it("reverts when user has a deliquent line of credit", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await polemarch.connect(users[0]).markDelinquent(weth.address, deployer.address);
+      await ethers.provider.send('evm_increaseTime', [24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await expect(polemarch.connect(users[1]).closeLineOfCredit(weth.address, deployer.address))
+        .to.be.revertedWith(
+          "USER_DEBT_IS_DELIQUENT"
+        );
+    });
+
+    it("reverts when a line of credit has not yet expired", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await expect(polemarch.connect(users[1]).closeLineOfCredit(weth.address, deployer.address))
+        .to.be.revertedWith(
+          "LINE_OF_CREDIT_HAS_NOT_EXPIRED"
+        );
+    });
+
+    it("reverts when a line of credit has greater than zero balance", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await weth.approve(polemarch.address, parseEther("0.05"));
+      await polemarch.repay(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await expect(polemarch.connect(users[1]).closeLineOfCredit(weth.address, deployer.address))
+        .to.be.revertedWith(
+          "USER_DEBT_BALANCE_IS_NOT_ZERO"
+        );
+    });
+
+    it("emits close line of credit event", async () => {
+      await weth.deposit({ value: parseEther("1.0") });
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await polemarch.createLineOfCredit(
+        deployer.address, 
+        weth.address, 
+        parseEther("0.1"), 
+        parseEther("0.05"),
+        14
+      );
+      const loc: Types.LineOfCreditStruct = await polemarch.getLineOfCredit(deployer.address);
+      await polemarch.borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      const dWETHBalance = await dWETH.balanceOf(deployer.address);
+      await weth.approve(polemarch.address, dWETHBalance);
+      await polemarch.repay(weth.address, dWETHBalance);
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await expect(polemarch.connect(users[0]).closeLineOfCredit(weth.address, deployer.address))
+        .to.emit(polemarch, "CloseLineOfCredit")
+        .withArgs(
+          loc.id,
+          deployer.address,
+          weth.address,
+          loc.expirationTimestamp
+        );
     })
   });
 });

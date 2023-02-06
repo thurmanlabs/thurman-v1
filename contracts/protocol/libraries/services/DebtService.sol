@@ -178,8 +178,8 @@ library DebtService {
 	function closeLineOfCredit(
 		mapping(address => Types.Exchequer) storage exchequers,
 		mapping(address => Types.LineOfCredit) storage linesOfCredit,
-		address underlyingAsset,
-		address borrower
+		address borrower,
+		address underlyingAsset
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
 		// exchequer.update();
@@ -189,12 +189,14 @@ library DebtService {
 			borrower
 		);
 		exchequer.totalDebt -= linesOfCredit[borrower].borrowMax;
+		uint128 logId = linesOfCredit[borrower].id;
+		uint40 logExpirationTimestamp = linesOfCredit[borrower].expirationTimestamp;
 		delete linesOfCredit[borrower];
 		emit CloseLineOfCredit(
-			linesOfCredit[borrower].id,
+			logId,
 			borrower,
 			underlyingAsset,
-			linesOfCredit[borrower].expirationTimestamp
+			logExpirationTimestamp
 		);
 	}
 }
