@@ -11,6 +11,7 @@ describe("polemarch-supply", function() {
   let weth: WETH9;
   let sWETH: SToken;
   let dWETH: DToken;
+  let thurman: ThurmanToken;
 
   beforeEach(async () => {
     const testEnv: TestEnv = await createTestEnv();
@@ -20,6 +21,7 @@ describe("polemarch-supply", function() {
     weth = testEnv.weth;
     sWETH = testEnv.sWETH;
     dWETH = testEnv.dWETH;
+    thurman = testEnv.thurman;
   });
   
   describe("supply-service account-supply", () => {

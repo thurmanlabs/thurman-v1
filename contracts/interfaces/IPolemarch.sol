@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
+// import {GovernorTimelockControlUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
+import {TimelockControllerUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
 import {Types} from "../protocol/libraries/types/Types.sol";
 
 interface IPolemarch {
@@ -79,6 +81,10 @@ interface IPolemarch {
 	function getNormalizedReturn(address underlyingAsset) external view returns (uint256);
 
 	function setExchequerBorrowing(address underlyingAsset, bool enabled) external;
+
+	function setTimelock(TimelockControllerUpgradeable timelock) external;
+
+	// function setGovernor(GovernorTimelockControlUpgradeable governor) external;
 
 	function setExchequerActive(address underlyingAsset, bool active) external;
 

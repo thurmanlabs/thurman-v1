@@ -11,6 +11,9 @@ describe("Polemarch", function() {
   let weth: WETH9;
   let sWETH: SToken;
   let dWETH: DToken;
+  let thurman: ThurmanToken;
+  let timelock: ThurmanTimelock;
+  let thurmanGov: ThurmanGovernor;
 
   beforeEach(async () => {
     const testEnv: TestEnv = await createTestEnv();
@@ -20,6 +23,9 @@ describe("Polemarch", function() {
     weth = testEnv.weth;
     sWETH = testEnv.sWETH;
     dWETH = testEnv.dWETH;
+    thurman = testEnv.thurman;
+    timelock = testEnv.timelock;
+    thurmanGov = testEnv.thurmanGov;
   });
 
   describe("exchequer", () => {

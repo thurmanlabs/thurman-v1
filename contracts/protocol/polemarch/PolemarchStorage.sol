@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
+import {TimelockControllerUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
+// import {GovernorTimelockControlUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
 import {Types} from "../libraries/types/Types.sol";
 
 contract PolemarchStorage {
@@ -11,6 +13,9 @@ contract PolemarchStorage {
 	mapping(address => Types.LineOfCredit) internal _linesOfCredit;
 	// both map to underlying assets
 	uint256 internal _linesOfCreditCount;
+	address internal _THURMAN;
+	TimelockControllerUpgradeable _timelock;
+	// GovernorTimelockControlUpgradeable _governor;
 	uint16 internal _exchequersCount;
 	uint16 internal _maxExchequersCount;
 }

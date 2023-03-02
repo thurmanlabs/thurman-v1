@@ -3,6 +3,8 @@ pragma solidity ^0.8.8;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {TimelockControllerUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
+// import {GovernorTimelockControlUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
 import {IPolemarch} from "../../interfaces/IPolemarch.sol";
 import {Types} from "../libraries/types/Types.sol";
 import {ConfigurationService} from "../libraries/services/ConfigurationService.sol";
@@ -14,6 +16,11 @@ import {PolemarchStorage} from "./PolemarchStorage.sol";
 
 contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPolemarch {
 	using ExchequerService for Types.Exchequer;
+
+	modifier onlyGovernance {
+		require(msg.sender == address(_timelock), "Not timelock");
+		_;
+	}
 
 	function initialize() external virtual initializer {
 		__Ownable_init();
@@ -44,14 +51,14 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		address underlyingAsset,
 		uint256 amount
 	) public virtual override {
-		SupplyService.addSupply(_exchequers, underlyingAsset, amount);
+		SupplyService.addSupply(_exchequers, underlyingAsset, _THURMAN, amount);
 	}
 
 	function withdraw(
 		address underlyingAsset,
 		uint256 amount
 	) public virtual override {
-		SupplyService.withdraw(_exchequers, underlyingAsset, amount);
+		SupplyService.withdraw(_exchequers, underlyingAsset, _THURMAN, amount);
 	}
 
 	function deleteExchequer(address underlyingAsset) external onlyOwner {
@@ -68,7 +75,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		uint256 borrowMax,
 		uint128 rate,
 		uint40 termDays
-	) external onlyOwner {
+	) external onlyGovernance {
 		DebtService.createLineOfCredit(
 			_exchequers,
 			_linesOfCredit,
@@ -136,6 +143,14 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		returns (uint256)
 	{
 		return _exchequers[underlyingAsset].getNormalizedReturn();
+	}
+
+	function setThurmanToken(address governanceToken) external onlyOwner {
+		_THURMAN = governanceToken;
+	}
+
+	function setTimelock(TimelockControllerUpgradeable timelock) external onlyOwner {
+		_timelock = timelock;
 	}
 
 	function setExchequerBorrowing(address underlyingAsset, bool enabled) external onlyOwner {

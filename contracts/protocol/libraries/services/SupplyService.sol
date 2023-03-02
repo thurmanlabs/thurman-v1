@@ -3,6 +3,7 @@ pragma solidity ^0.8.8;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ISToken} from "../../../interfaces/ISToken.sol";
+import {IThurmanToken} from "../../../interfaces/IThurmanToken.sol";
 import {Types} from "../types/Types.sol";
 import {ExchequerService} from "./ExchequerService.sol";
 import {StrategusService} from "./StrategusService.sol";
@@ -18,6 +19,7 @@ library SupplyService {
 	function addSupply(
 		mapping(address => Types.Exchequer) storage exchequers,
 		address underlyingAsset,
+		address governanceAsset,
 		uint256 amount
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
@@ -30,6 +32,7 @@ library SupplyService {
 			amount,
 			exchequer.supplyIndex
 		);
+		IThurmanToken(governanceAsset).mint(msg.sender, amount);
 		exchequer.updateSupplyRate();
 
 		emit Supply(underlyingAsset, msg.sender, amount);
@@ -39,6 +42,7 @@ library SupplyService {
 	function withdraw(
 		mapping(address => Types.Exchequer) storage exchequers,
 		address underlyingAsset,
+		address governanceAsset,
 		uint256 amount
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
@@ -63,6 +67,7 @@ library SupplyService {
 			amount,
 			exchequer.supplyIndex
 		);
+		IThurmanToken(governanceAsset).burn(msg.sender, amount);
 		exchequer.updateSupplyRate();
 
 		emit Withdraw(underlyingAsset, msg.sender, amount);

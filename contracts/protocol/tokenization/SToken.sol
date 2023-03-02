@@ -9,6 +9,7 @@ import {ERC20Base} from "./ERC20Base.sol";
 import {WadRayMath} from "../libraries/math/WadRayMath.sol";
 import {IPolemarch} from "../../interfaces/IPolemarch.sol";
 import {ISToken} from "../../interfaces/ISToken.sol";
+import {IThurmanToken} from "../../interfaces/IThurmanToken.sol";
 import {ScaledBalanceTokenBase} from "./ScaledBalanceTokenBase.sol";
 
 contract SToken is ScaledBalanceTokenBase, ISToken {
@@ -17,6 +18,7 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 
  	address internal _exchequerSafe;
  	address internal _underlyingAsset;
+
 
 	function initialize(
 		IPolemarch polemarch,
@@ -33,8 +35,8 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 		emit Initialized(underlyingAsset, decimals);
 	}
 
-	function mint(address caller, uint256 amount, uint256 index) external onlyPolemarch {
-		_mintScaled(caller, amount, index);
+	function mint(address account, uint256 amount, uint256 index) external onlyPolemarch {
+		_mintScaled(account, amount, index);
 	}
 
 	function mintToExchequerSafe(uint256 amount, uint256 index) external onlyPolemarch {
