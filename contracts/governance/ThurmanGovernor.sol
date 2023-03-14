@@ -12,28 +12,52 @@ import {TimelockControllerUpgradeable} from "@openzeppelin/contracts-upgradeable
 import {IGovernorUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/IGovernorUpgradeable.sol";
 
 contract ThurmanGovernor is GovernorUpgradeable, GovernorCompatibilityBravoUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable, GovernorTimelockControlUpgradeable {
+    uint256 public _votingDelay;
+    uint256 public _votingPeriod;
+    uint256 public _proposalThreshold;
+
     function initialize(
         IVotesUpgradeable _token,
         TimelockControllerUpgradeable _timelock,
-        string memory name
+        string memory name,
+        uint256 govVotingDelay,
+        uint256 govVotingPeriod,
+        uint256 govProposalThreshold
     ) external initializer {
         __Governor_init(name);
         __GovernorVotes_init(_token);
         __GovernorVotesQuorumFraction_init(4);
         __GovernorTimelockControl_init(_timelock);
-
+        _setVotingDelay(govVotingDelay);
+        _setVotingPeriod(govVotingPeriod);
+        _setProposalThreshold(govProposalThreshold);
     }
 
-    function votingDelay() public pure override returns (uint256) {
-        return 6575; // 1 day
+    function _setVotingDelay(uint256 newVotingDelay) internal {
+        _votingDelay = newVotingDelay;
     }
 
-    function votingPeriod() public pure override returns (uint256) {
-        return 46027; // 1 week
+    function _setVotingPeriod(uint256 newVotingPeriod) internal {
+        _votingPeriod = newVotingPeriod;
     }
 
-    function proposalThreshold() public pure override returns (uint256) {
-        return 0;
+    function _setProposalThreshold(uint256 newProposalThreshold) internal {
+        _proposalThreshold = newProposalThreshold;
+    }
+
+    function votingDelay() public view override returns (uint256) {
+        // return 6575; // 1 day
+        return _votingDelay;
+    }
+
+    function votingPeriod() public view override returns (uint256) {
+        // return 46027; // 1 week
+        return _votingPeriod;
+    }
+
+    function proposalThreshold() public view override returns (uint256) {
+        // return 0;
+        return _proposalThreshold;
     }
 
     // The functions below are overrides required by Solidity.

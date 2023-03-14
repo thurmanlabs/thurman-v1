@@ -24,6 +24,7 @@ library ExchequerService {
 		address sTokenAddress,
 		address dTokenAddress,
 		uint8 decimals,
+		uint256 protocolBorrowFee,
 		uint16 exchequersCount,
 		uint16 maxExchequersCount
 	) internal returns (bool) {
@@ -50,6 +51,7 @@ library ExchequerService {
 		require(exchequersCount < maxExchequersCount, "NO_MORE_RESERVES_ALLOWED");
 		exchequers[underlyingAsset].id = exchequersCount;
 		exchequersList[exchequersCount] = underlyingAsset;
+		exchequers[underlyingAsset].protocolBorrowFee = protocolBorrowFee;
 		exchequers[underlyingAsset].active = true;
 		return true;
 	}
@@ -100,7 +102,9 @@ library ExchequerService {
 		uint40 termDays
 	) internal view returns (uint256) {
 		uint256 termSeconds = uint256(termDays) * 1 days;
-		return uint256(borrowMax.rayMul(uint256(exchequer.protocolBorrowFee)).
+		uint256 protocolBorrowFee = exchequer.protocolBorrowFee.wadToRay();
+		// protocolBorrowFee = protocolBorrowFee.wadToRay();
+		return uint256(borrowMax.rayMul(uint256(protocolBorrowFee)).
 			rayMul((termSeconds).rayDiv(MathUtils.SECONDS_PER_YEAR)));
 	}
 

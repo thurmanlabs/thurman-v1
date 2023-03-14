@@ -31,7 +31,8 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		address underlyingAsset,
 		address sTokenAddress,
 		address dTokenAddress,
-		uint8 decimals
+		uint8 decimals,
+		uint256 protocolBorrowFee
 	) external onlyOwner {
 		if (ExchequerService.addExchequer(
 			_exchequers,
@@ -40,6 +41,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 			sTokenAddress,
 			dTokenAddress,
 			decimals,
+			protocolBorrowFee,
 			_exchequersCount,
 			_maxExchequersCount
 		)) {

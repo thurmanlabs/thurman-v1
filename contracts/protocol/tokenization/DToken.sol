@@ -47,6 +47,7 @@ contract DToken is ERC20Base, IDToken {
 	{
 		uint256 userBalance = super.balanceOf(user);
 		uint256 rate = _additionalUserData[user];
+		// rate = rate.wadToRay();
 		if (userBalance == 0) {
 			return 0;
 		}
@@ -67,7 +68,7 @@ contract DToken is ERC20Base, IDToken {
 		currentAverageRate = _averageRate = ((currentAverageRate.rayMul(previousSupply.wadToRay()) + 
 			rate.rayMul(amountInRay)).rayDiv(nextSupply.wadToRay())).toUint128();
 
-		_timestamps[user] = uint40(block.timestamp);
+		_totalSupplyTimestamp = _timestamps[user] = uint40(block.timestamp);
 		uint amountToMint = amount + balanceIncrease;
 		// _borrowBalances[user] += amount;
 		_mint(user, amountToMint);
@@ -79,7 +80,7 @@ contract DToken is ERC20Base, IDToken {
 		uint256 previousSupply = totalSupply();
 		uint256 nextAverageRate = 0;
 		uint256 nextSupply = 0;
-		uint256 rate = _additionalUserData[user];
+		uint256 rate = uint256(_additionalUserData[user]);
 
 		if (previousSupply <= amount) {
 			_averageRate = 0;
@@ -96,7 +97,7 @@ contract DToken is ERC20Base, IDToken {
 			}
 		}
 
-		_timestamps[user] = uint40(block.timestamp);
+		_totalSupplyTimestamp = _timestamps[user] = uint40(block.timestamp);
 		if (balanceIncrease > amount) {
 			uint256 amountToMint = balanceIncrease - amount;
 			_mint(user, amountToMint);
@@ -120,7 +121,8 @@ contract DToken is ERC20Base, IDToken {
 
 	// updateRate function can be used at the creation and close of line of credit
 	function updateRate(address user, uint128 rate) external virtual onlyPolemarch {
-		_additionalUserData[user] = rate;
+		uint256 newRate = uint256(rate).wadToRay();
+		_additionalUserData[user] = uint128(newRate);
 	}
 
 	function userRate(address user) public view returns (uint128) {
@@ -157,5 +159,60 @@ contract DToken is ERC20Base, IDToken {
 		);
 
 		return principalSupply.rayMul(cumulatedInterest);
+	}
+
+	function transfer(address, uint256) 
+		public 
+		virtual 
+		override(ERC20Upgradeable, IERC20Upgradeable)
+		returns (bool) 
+	{
+		revert("OPERATION_NOT_SUPPORTED");
+	}
+
+	function allowance(address, address) 
+		public 
+		view 
+		virtual 
+		override(ERC20Upgradeable, IERC20Upgradeable) 
+		returns (uint256) 
+	{
+		revert("OPERATION_NOT_SUPPORTED");
+	}
+
+	function approve(address, uint256) 
+		public 
+		virtual 
+		override(ERC20Upgradeable, IERC20Upgradeable)
+		returns (bool) 
+	{
+		revert("OPERATION_NOT_SUPPORTED");
+	}
+
+	function transferFrom(address, address, uint256) 
+		public 
+		virtual 
+		override(ERC20Upgradeable, IERC20Upgradeable) 
+		returns (bool) 
+	{
+		revert("OPERATION_NOT_SUPPORTED");
+	}
+
+	function increaseAllowance(address, uint256) 
+		public 
+		virtual 
+		override(ERC20Upgradeable) 
+		returns (bool) 
+	{
+		revert("OPERATION_NOT_SUPPORTED");
+	}
+
+	function decreaseAllowance(address, uint256) 
+		public 
+		virtual 
+		override(ERC20Upgradeable) 
+		returns (bool) 
+	{
+		revert("OPERATION_NOT_SUPPORTED");
 	}
 }

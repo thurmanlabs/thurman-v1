@@ -39,12 +39,12 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 		_mintScaled(account, amount, index);
 	}
 
-	function mintToExchequerSafe(uint256 amount, uint256 index) external onlyPolemarch {
-		if (amount == 0) {
-		  return;
-		}
-		_mintScaled(_exchequerSafe, amount, index);
-	}
+	// function mintToExchequerSafe(uint256 amount, uint256 index) external onlyPolemarch {
+	// 	if (amount == 0) {
+	// 	  return;
+	// 	}
+	// 	_mintScaled(_exchequerSafe, amount, index);
+	// }
 
 	function burn(address account, uint256 amount, uint256 index) external onlyPolemarch {
 		_burnScaled(account, amount, index);

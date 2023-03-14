@@ -3,37 +3,34 @@ import { parseEther, formatEther } from "ethers/lib/utils";
 import { assert, expect } from "chai";
 import { network, deployments, ethers, upgrades } from "hardhat";
 import { TestEnv, createTestEnv, WETH_DECIMALS } from "./setup";
+import { makeLineOfCredit } from "../helpers/contract-helpers";
+
 
 describe("polemarch-supply", function() {
-  let deployer: SignerWithAddress;
-  let users: SignerWithAddress[];
-  let polemarch: Polemarch;
-  let weth: WETH9;
-  let sWETH: SToken;
-  let dWETH: DToken;
-  let thurman: ThurmanToken;
+  let testEnv: TestEnv;
 
   beforeEach(async () => {
-    const testEnv: TestEnv = await createTestEnv();
-    deployer = testEnv.deployer;
-    users = testEnv.users;
-    polemarch = testEnv.polemarch;
-    weth = testEnv.weth;
-    sWETH = testEnv.sWETH;
-    dWETH = testEnv.dWETH;
-    thurman = testEnv.thurman;
+    testEnv = await createTestEnv();
   });
   
   describe("supply-service account-supply", () => {
     
+    it("gets the exchequer safe", async () => {
+      const { deployer, sWETH } = testEnv;
+      const exchequerSafe: string = await sWETH.getExchequerSafe();
+      await expect(exchequerSafe).to.equal(deployer.address);
+    })
+
     it("reverts when supply amount is zero", async () => {
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      const { polemarch, weth, sWETH, dWETH } = testEnv;
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await expect(polemarch.supply(weth.address, parseEther("0"))).to.be.revertedWith("INVALID_AMOUNT");
     });
 
     it("reverts supply when exchequer is inactive", async () => {
+      const { polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.setExchequerActive(weth.address, false);
       await expect(polemarch.supply(weth.address, parseEther("0.5"))).to.be.revertedWith(
@@ -42,8 +39,9 @@ describe("polemarch-supply", function() {
     });
 
     it("reverts when supply is over supplyCap", async () => {
+      const { polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.setSupplyCap(weth.address, parseEther("0.25"));
       await expect(polemarch.supply(weth.address, parseEther("0.5"))).to.be.revertedWith(
@@ -52,8 +50,9 @@ describe("polemarch-supply", function() {
     });
 
     it("emits a supply event", async () => {
+      const { deployer, polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await expect(polemarch.supply(weth.address, parseEther("0.5")))
         .to.emit(polemarch, "Supply")
@@ -64,8 +63,9 @@ describe("polemarch-supply", function() {
   describe("supply-service account-withdraw", () => {
 
     it("reverts when withdraw is zero", async () => {
+      const { polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.supply(weth.address, parseEther("0.5"));
       await expect(polemarch.withdraw(weth.address, parseEther("0.0"))).to.be.revertedWith(
@@ -74,8 +74,9 @@ describe("polemarch-supply", function() {
     });
 
     it("reverts when user balance is too low for withdraw", async () => {
+      const { polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.supply(weth.address, parseEther("0.5"));
       await expect(polemarch.withdraw(weth.address, parseEther("1.0"))).to.be.revertedWith(
@@ -84,8 +85,9 @@ describe("polemarch-supply", function() {
     });
 
     it("reverts withdraw when exchequer is inactive", async () => {
+      const { polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.supply(weth.address, parseEther("0.5"));
       await polemarch.setExchequerActive(weth.address, false);
@@ -96,22 +98,24 @@ describe("polemarch-supply", function() {
 
     it("reverts when user requests to withdraw more than their proportional available supply", 
       async () => {
-        await weth.deposit({ value: parseEther("1.0") });
-        await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
-        await weth.approve(polemarch.address, parseEther("0.5"));
-        await polemarch.supply(weth.address, parseEther("0.5"));
-        await polemarch.setExchequerBorrowing(weth.address, true);
-        await polemarch.createLineOfCredit(
-          deployer.address,
-          weth.address,
-          parseEther("0.25"),
-          parseEther("0.05"), 
+        const { users, polemarch, weth, sWETH, dWETH } = testEnv;
+        const borrowerIndex: number = 5;
+        const eventIndex: number = 0;
+        let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+        await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
+        await makeLineOfCredit(
+          testEnv, 
+          proposalDescription, 
+          "2.0", 
+          borrowerIndex, 
+          eventIndex, 
+          "10.0", 
+          "20.0", 
           14
         );
         await weth.approve(polemarch.address, parseEther("0.3"));
-        await expect(polemarch.withdraw(weth.address, parseEther("0.3"))).to.be.revertedWith(
-          "WITHDRAWABLE_BALANCE_TOO_LOW"
-        );
+        await expect(polemarch.connect(users[borrowerIndex]).withdraw(weth.address, parseEther("2.0")))
+          .to.be.revertedWith("WITHDRAWABLE_BALANCE_TOO_LOW");
       }
     )
   })

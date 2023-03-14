@@ -69,7 +69,8 @@ interface IPolemarch {
 		address underlyingAsset, 
 		address sTokenAddress, 
 		address dTokenAddress, 
-		uint8 decimals
+		uint8 decimals,
+		uint256 protocolBorrowFee
 	) external;
 
 	function deleteExchequer(address underlyingAsset) external;

@@ -6,7 +6,7 @@ import { TestEnv, createTestEnv, WETH_DECIMALS } from "./setup";
 import { makeLineOfCredit, makeDaoVoters, makeLocProposal } from "../helpers/contract-helpers";
 
 describe("polemarch-debt", function() {
-  let testEnv;
+  let testEnv: TestEnv;
 
   beforeEach(async () => {
     testEnv = await createTestEnv();
@@ -17,14 +17,14 @@ describe("polemarch-debt", function() {
       const { polemarch, weth, sWETH, dWETH } = testEnv;
       const borrowerIndex: number = 5;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await expect(makeLineOfCredit(testEnv, proposalDescription, "10.0", borrowerIndex, 0,  "0.0", "20.0", 14))
         .to.be.revertedWith("TimelockController: underlying transaction reverted");
     });
 
     it("reverts createLineOfCredit when exchequer is inactive", async () => {
       const { users, polemarch, weth, sWETH, dWETH, thurmanGov } = testEnv;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       const borrowerIndex: number = 5;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
       await makeDaoVoters(testEnv, "10.0");
@@ -71,7 +71,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
       const { polemarch, weth, sWETH, dWETH } = testEnv;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await expect(makeLineOfCredit(testEnv, proposalDescription, "1.0", borrowerIndex, 0, "50.0", "20.0", 14))
         .to.be.revertedWith("TimelockController: underlying transaction reverted");
     });
@@ -80,7 +80,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
       const { polemarch, weth, sWETH, dWETH } = testEnv;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await polemarch.setBorrowCap(weth.address, parseEther("0.25"));
       await expect(makeLineOfCredit(testEnv, proposalDescription, "1.0", borrowerIndex, 0, "5.0", "20.0", 14))
         .to.be.revertedWith("TimelockController: underlying transaction reverted");
@@ -90,7 +90,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
       const { users, polemarch, weth, sWETH, dWETH, thurmanGov } = testEnv;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(testEnv, proposalDescription, "10.0", borrowerIndex, 0, "10.0", "20.0", 14);
       
       await hre.network.provider.send("hardhat_mine", ["0xB3E2"]);
@@ -106,7 +106,7 @@ describe("polemarch-debt", function() {
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
       const { users, polemarch, weth, sWETH, dWETH } = testEnv;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(testEnv, proposalDescription, "10.0", borrowerIndex, eventIndex, "10.0", "20.0", 14);
       await polemarch.connect(users[5]).borrow(weth.address, parseEther("1.0"));
       await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
@@ -133,7 +133,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       expect(await makeLineOfCredit(testEnv, proposalDescription, "10.0", borrowerIndex, eventIndex, "10.0", "20.0", 14))
         .to.emit(polemarch, "CreateLineOfCredit");
     })
@@ -145,7 +145,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -165,7 +165,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -186,7 +186,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -205,7 +205,7 @@ describe("polemarch-debt", function() {
     it("reverts when a user does not have a line of credit", async () => {
       const { polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.supply(weth.address, parseEther("0.5"));
       await polemarch.setExchequerBorrowing(weth.address, true);
@@ -219,7 +219,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -242,7 +242,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -265,7 +265,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -289,7 +289,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -315,7 +315,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -338,7 +338,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -360,7 +360,7 @@ describe("polemarch-debt", function() {
     it("reverts repay when the user does not have a line of credit", async () => {
       const { users, polemarch, weth, sWETH, dWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.supply(weth.address, parseEther("0.5"));
       await polemarch.setExchequerBorrowing(weth.address, true);
@@ -374,7 +374,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -397,7 +397,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -421,7 +421,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -448,7 +448,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -473,7 +473,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -511,7 +511,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -538,7 +538,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -566,7 +566,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -591,7 +591,7 @@ describe("polemarch-debt", function() {
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 
@@ -616,12 +616,87 @@ describe("polemarch-debt", function() {
         );
     });
 
+    it("when the last user is repaying, the avg rate goes to zero", async () => {
+      const { users, polemarch, weth, sWETH, dWETH } = testEnv;
+      const borrowerIndex: number = 5;
+      const borrowerIndex2: number = 2;
+      const eventIndex: number = 0;
+      const eventIndex1: number = 1;
+      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+      let proposalDescription2 = `Proposal #2: Create a line of credit for User #${borrowerIndex2}`;
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
+      await makeLineOfCredit(
+        testEnv, 
+        proposalDescription, 
+        "2.5", 
+        borrowerIndex, 
+        eventIndex, 
+        "5.0", 
+        "2.0", 
+        14
+      );
+      
+      await makeLineOfCredit(
+        testEnv, 
+        proposalDescription2, 
+        "3.0", 
+        borrowerIndex2, 
+        eventIndex1, 
+        "6.0", 
+        "10.0", 
+        28
+      );
+
+      await ethers.provider.send('evm_increaseTime', [1 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      
+      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("5.0"));
+      await polemarch.connect(users[borrowerIndex2]).borrow(weth.address, parseEther("6.0"));
+
+      await ethers.provider.send('evm_increaseTime', [12 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      
+      let dWETHBalance = await dWETH.balanceOf(users[borrowerIndex].address);
+      await weth.connect(users[borrowerIndex]).deposit({ value: parseEther("8.0") });
+      await weth.connect(users[borrowerIndex]).approve(polemarch.address, dWETHBalance);
+      await polemarch.connect(users[borrowerIndex]).repay(weth.address, dWETHBalance);
+
+      dWETHBalance = await dWETH.balanceOf(users[borrowerIndex].address)
+      await weth.connect(users[borrowerIndex]).approve(polemarch.address, dWETHBalance);
+      await polemarch.connect(users[borrowerIndex]).repay(weth.address, dWETHBalance);
+
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+
+      await polemarch.connect(users[0]).closeLineOfCredit(weth.address, users[borrowerIndex].address);
+
+      await ethers.provider.send('evm_increaseTime', [12 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+
+      dWETHBalance = await dWETH.balanceOf(users[borrowerIndex2].address);
+      await weth.connect(users[borrowerIndex2]).deposit({ value: parseEther("8.0") });
+      await weth.connect(users[borrowerIndex2]).approve(polemarch.address, dWETHBalance);
+      await polemarch.connect(users[borrowerIndex2]).repay(weth.address, dWETHBalance);
+
+      dWETHBalance = await dWETH.balanceOf(users[borrowerIndex2].address)
+      await weth.connect(users[borrowerIndex2]).approve(polemarch.address, dWETHBalance);
+      await polemarch.connect(users[borrowerIndex2]).repay(weth.address, dWETHBalance);
+
+      await ethers.provider.send('evm_increaseTime', [4 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+
+      await polemarch.connect(users[0]).closeLineOfCredit(weth.address, users[borrowerIndex2].address);
+
+      let avgRate = await dWETH.getAverageRate();
+      expect(avgRate).to.equal(parseEther("0.0"));
+    })
+
     it("emits close line of credit event", async () => {
       const { users, polemarch, weth, sWETH, dWETH } = testEnv;
       const borrowerIndex: number = 5;
       const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS);
+      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
       await makeLineOfCredit(
         testEnv, 
         proposalDescription, 

@@ -72,21 +72,22 @@ library DebtService {
 			borrowMax
 		);
 		linesOfCredit[borrower].underlyingAsset = underlyingAsset;
-		linesOfCredit[borrower].borrowMax = borrowMax;
 		IDToken(exchequer.dTokenAddress).updateRate(borrower, rate);
 		linesOfCredit[borrower].creationTimestamp = uint40(block.timestamp);
 		linesOfCredit[borrower].expirationTimestamp = uint40(block.timestamp + termDays * 1 days);
 		linesOfCredit[borrower].id = uint128(linesOfCreditCount + 1);
 		linesOfCredit[borrower].deliquent = false;
-		exchequer.totalDebt += borrowMax;
 		uint256 protocolFee = exchequer.calculateProtocolFee(borrowMax, termDays);
+		uint256 trueBorrowMax = borrowMax - protocolFee;
+		linesOfCredit[borrower].borrowMax = trueBorrowMax;
+		exchequer.totalDebt += trueBorrowMax;		
 		ISToken(exchequer.sTokenAddress).transferUnderlyingToExchequerSafe(protocolFee);
 		emit CreateLineOfCredit(
 			linesOfCredit[borrower].id,
 			rate,
 			borrower,
 			underlyingAsset,
-			borrowMax,
+			trueBorrowMax,
 			linesOfCredit[borrower].expirationTimestamp
 		);
 	}

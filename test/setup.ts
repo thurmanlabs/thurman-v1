@@ -89,6 +89,9 @@ export async function createTestEnv(): TestEnv {
     thurman.address,
     timelock.address,
     "ThurmanDAO",
+    6575,
+    46027,
+    0
   ]);
   await thurmanGov.deployed();
 

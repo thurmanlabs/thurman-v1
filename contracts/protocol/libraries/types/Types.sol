@@ -10,7 +10,7 @@ library Types {
     uint8 decimals;
     bool active;
     bool borrowingEnabled;
-    uint16 protocolBorrowFee;
+    uint256 protocolBorrowFee;
     uint256 totalDebt;
     uint256 borrowCap;
     uint256 supplyCap;
