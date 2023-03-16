@@ -4,6 +4,7 @@ pragma solidity ^0.8.8;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {IGToken} from "../../../interfaces/IGToken.sol";
 import {ISToken} from "../../../interfaces/ISToken.sol";
 import {IDToken} from "../../../interfaces/IDToken.sol";
 import {Types} from "../types/Types.sol";
@@ -64,30 +65,29 @@ library DebtService {
 		uint40 termDays
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
+		uint256 protocolBorrowFee = exchequer.calculateProtocolFee(borrowMax, termDays);
 		StrategusService.guardCreateLineOfCredit(
 			exchequer,
 			linesOfCredit,
 			underlyingAsset,
 			borrower,
-			borrowMax
+			borrowMax,
+			protocolBorrowFee
 		);
 		linesOfCredit[borrower].underlyingAsset = underlyingAsset;
 		IDToken(exchequer.dTokenAddress).updateRate(borrower, rate);
 		linesOfCredit[borrower].creationTimestamp = uint40(block.timestamp);
 		linesOfCredit[borrower].expirationTimestamp = uint40(block.timestamp + termDays * 1 days);
 		linesOfCredit[borrower].id = uint128(linesOfCreditCount + 1);
-		linesOfCredit[borrower].deliquent = false;
-		uint256 protocolFee = exchequer.calculateProtocolFee(borrowMax, termDays);
-		uint256 trueBorrowMax = borrowMax - protocolFee;
-		linesOfCredit[borrower].borrowMax = trueBorrowMax;
-		exchequer.totalDebt += trueBorrowMax;		
-		ISToken(exchequer.sTokenAddress).transferUnderlyingToExchequerSafe(protocolFee);
+		linesOfCredit[borrower].deliquent = false;		
+		linesOfCredit[borrower].borrowMax = borrowMax;
+		IGToken(exchequer.gTokenAddress).transferUnderlyingToExchequerSafe(protocolBorrowFee);
 		emit CreateLineOfCredit(
 			linesOfCredit[borrower].id,
 			rate,
 			borrower,
 			underlyingAsset,
-			trueBorrowMax,
+			borrowMax,
 			linesOfCredit[borrower].expirationTimestamp
 		);
 	}
@@ -159,7 +159,6 @@ library DebtService {
 		address underlyingAsset
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
-		// exchequer.update();
 		StrategusService.guardDelinquency(
 			exchequer,
 			linesOfCredit,
@@ -167,6 +166,11 @@ library DebtService {
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
+		IERC20(underlyingAsset).transferFrom(
+			exchequer.gTokenAddress, 
+			exchequer.sTokenAddress, 
+			remainingBalance
+		);
 		emit Delinquent(
 			linesOfCredit[borrower].id,
 			borrower,
@@ -189,7 +193,20 @@ library DebtService {
 			linesOfCredit,
 			borrower
 		);
-		exchequer.totalDebt -= linesOfCredit[borrower].borrowMax;
+		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
+		if (remainingBalance > 0) {
+			IERC20(underlyingAsset).transferFrom(
+				exchequer.gTokenAddress, 
+				exchequer.sTokenAddress,
+				remainingBalance
+			);
+		}
+		if (exchequer.totalDebt <= linesOfCredit[borrower].borrowMax) {
+			exchequer.totalDebt = 0;
+		} else {
+			exchequer.totalDebt -= linesOfCredit[borrower].borrowMax;
+		}
+		
 		uint128 logId = linesOfCredit[borrower].id;
 		uint40 logExpirationTimestamp = linesOfCredit[borrower].expirationTimestamp;
 		delete linesOfCredit[borrower];

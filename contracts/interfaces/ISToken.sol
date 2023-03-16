@@ -5,7 +5,6 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {IScaledBalanceToken} from "./IScaledBalanceToken.sol";
 
 interface ISToken is IERC20Upgradeable, IScaledBalanceToken {
-	event Initialized(address indexed underlyingAsset, uint8 sTokenDecimals);
 
 	function mint(address account, uint256 amount, uint256 index) external;
 

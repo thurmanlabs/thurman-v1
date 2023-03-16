@@ -31,6 +31,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		address underlyingAsset,
 		address sTokenAddress,
 		address dTokenAddress,
+		address gTokenAddress,
 		uint8 decimals,
 		uint256 protocolBorrowFee
 	) external onlyOwner {
@@ -40,6 +41,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 			underlyingAsset,
 			sTokenAddress,
 			dTokenAddress,
+			gTokenAddress,
 			decimals,
 			protocolBorrowFee,
 			_exchequersCount,
@@ -54,6 +56,13 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		uint256 amount
 	) public virtual override {
 		SupplyService.addSupply(_exchequers, underlyingAsset, _THURMAN, amount);
+	}
+
+	function grantSupply(
+		address underlyingAsset,
+		uint256 amount
+	) public virtual override {
+		SupplyService.addGrantSupply(_exchequers, underlyingAsset, _THURMAN, amount);
 	}
 
 	function withdraw(
@@ -115,7 +124,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		);
 	}
 
-	function markDelinquent(address underlyingAsset, address borrower) public virtual override {
+	function markDelinquent(address underlyingAsset, address borrower) external onlyOwner {
 		DebtService.markDelinquent(
 			_exchequers, 
 			_linesOfCredit, 
@@ -124,7 +133,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		);
 	}
 
-	function closeLineOfCredit(address underlyingAsset, address borrower) public virtual override {
+	function closeLineOfCredit(address underlyingAsset, address borrower) external onlyOwner {
 		DebtService.closeLineOfCredit(
 			_exchequers,
 			_linesOfCredit,

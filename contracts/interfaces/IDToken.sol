@@ -4,7 +4,6 @@ pragma solidity ^0.8.8;
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 interface IDToken is IERC20Upgradeable {
-	event Initialized(address indexed underlyingAsset, uint8 dTokenDecimals);
 
 	event Mint(
 		address indexed user,

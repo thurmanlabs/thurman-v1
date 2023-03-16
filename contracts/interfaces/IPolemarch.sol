@@ -7,6 +7,7 @@ import {Types} from "../protocol/libraries/types/Types.sol";
 
 interface IPolemarch {
 	event Supply(address indexed exchequer, address indexed user, uint256 amount);
+	event GrantSupply(address indexed exchequer, address indexed user, uint256 amount);
 	event Withdraw(address indexed exchequer, address indexed user, uint256 amount);
 	event CreateLineOfCredit(
 		uint128 indexed id,
@@ -46,6 +47,8 @@ interface IPolemarch {
 	);
 
 	function supply(address underlyingAsset, uint256 amount) external;
+
+	function grantSupply(address underlyingAsset, uint256 amount) external;
 	
 	function withdraw(address underlyingAsset, uint256 amount) external;
 
@@ -69,6 +72,7 @@ interface IPolemarch {
 		address underlyingAsset, 
 		address sTokenAddress, 
 		address dTokenAddress, 
+		address gTokenAddress,
 		uint8 decimals,
 		uint256 protocolBorrowFee
 	) external;

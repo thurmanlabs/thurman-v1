@@ -35,7 +35,7 @@ contract DToken is ERC20Base, IDToken {
 		ERC20Base.initialize(polemarch, name, symbol, decimals);
 		_exchequerSafe = exchequerSafe;
 		_underlyingAsset = underlyingAsset;
-		emit Initialized(underlyingAsset, decimals);
+		// emit Initialized(underlyingAsset, decimals);
 	}
 
 	function balanceOf(address user) 

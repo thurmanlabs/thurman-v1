@@ -22,9 +22,16 @@ describe("sToken", function() {
 
   describe("scaledTokenBalance", () => {
     it("returns the last updated index for sToken", async () => {
-      const { deployer, polemarch, weth, sWETH, dWETH } = testEnv;
+      const { deployer, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
       await weth.approve(polemarch.address, parseEther("0.5"));
       await polemarch.supply(weth.address, parseEther("0.5"));
       const previousIndex = await sWETH.getPreviousIndex(deployer.address);
@@ -34,10 +41,30 @@ describe("sToken", function() {
 
     it("mints when balance increase is larger than burn amount", async () => {
       const borrowerIndex: number = 5;
+      const eventIndex: number = 0;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      const { deployer, users, polemarch, weth, sWETH, dWETH } = testEnv;
-      await polemarch.addExchequer(weth.address, sWETH.address, dWETH.address, WETH_DECIMALS, parseEther("0.05");
-      await makeLineOfCredit(testEnv, proposalDescription, "1.0", borrowerIndex, 0, "5.0", "20.0", 14);
+      const { deployer, users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+      await weth.deposit({ value: parseEther("10.0") });
+      await weth.approve(polemarch.address, parseEther("10.0"));
+      await polemarch.grantSupply(weth.address, parseEther("10.0"));
+      await makeLineOfCredit(
+        testEnv, 
+        proposalDescription, 
+        "2.5", 
+        borrowerIndex, 
+        eventIndex, 
+        "5.0", 
+        "0.2", 
+        14
+      );
 
       await weth.deposit({ value: parseEther("10.0") });
       await weth.approve(polemarch.address, parseEther("5.0"));
@@ -61,6 +88,7 @@ describe("sToken", function() {
       await polemarch.connect(users[borrowerIndex]).repay(weth.address, dWETHBalance);
       await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
       await ethers.provider.send('evm_mine');
+      await gWETH.approvePolemarch(parseEther("1.0"));
       await polemarch.closeLineOfCredit(weth.address, users[borrowerIndex].address);
       const balance_1 = await sWETH.balanceOf(deployer.address);
       const difference = balance_1 - balance_0 - 10**3 // arbitrary constant substracted to make sure Mint event happens

@@ -23,6 +23,7 @@ library ExchequerService {
 		address underlyingAsset,
 		address sTokenAddress,
 		address dTokenAddress,
+		address gTokenAddress,
 		uint8 decimals,
 		uint256 protocolBorrowFee,
 		uint16 exchequersCount,
@@ -32,8 +33,10 @@ library ExchequerService {
 		require(exchequers[underlyingAsset].sTokenAddress == address(0), "EXCHEQUER_ALREADY_INITIALIZED");
 
 		exchequers[underlyingAsset].supplyIndex = uint128(WadRayMath.RAY);
+		exchequers[underlyingAsset].collateralFactor = WadRayMath.RAY;
 		exchequers[underlyingAsset].sTokenAddress = sTokenAddress;
 		exchequers[underlyingAsset].dTokenAddress = dTokenAddress;
+		exchequers[underlyingAsset].gTokenAddress = gTokenAddress;
 		exchequers[underlyingAsset].decimals = decimals;
 
 		bool exchequerAlreadyAdded = exchequers[underlyingAsset].id != 0 ||

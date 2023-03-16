@@ -11,6 +11,7 @@ export interface TestEnv {
   weth: WETH9;
   sWETH: SToken;
   dWETH: DToken;
+  gWETH: GToken;
   thurman: ThurmanToken;
   timelock: ThurmanTimelock;
   thurmanGov: ThurmanGovernor;
@@ -23,6 +24,7 @@ export const testEnv: TestEnv = {
   weth: {} as WETH9,
   sWETH: {} as SToken,
   dWETH: {} as DToken,
+  gWETH: {} as GToken,
   thurman: {} as ThurmanToken,
   timelock: {} as ThurmanTimelock,
   thurmanGov: {} as ThurmanGovernor,
@@ -33,6 +35,7 @@ export async function createTestEnv(): TestEnv {
   let weth: WETH9;
   let sWETH: SToken;
   let dWETH: DToken;
+  let gWETH: GToken;
   let thurman: ThurmanToken;
   let timelock: ThurmanTimelock;
   let thurmanGov: ThurmanGovernor;
@@ -65,6 +68,17 @@ export async function createTestEnv(): TestEnv {
     weth.address,
   ]);
   await dWETH.deployed();
+
+  const GToken = await ethers.getContractFactory("GToken");
+  gWETH = await upgrades.deployProxy(GToken, [
+    polemarch.address,
+    "gWETH",
+    "G_WETH",
+    WETH_DECIMALS,
+    deployer.address,
+    weth.address,
+  ]);
+  await gWETH.deployed();
 
   const Thurman = await ethers.getContractFactory("ThurmanToken");
   thurman = await upgrades.deployProxy(Thurman, [
@@ -102,16 +116,6 @@ export async function createTestEnv(): TestEnv {
   await polemarch.setThurmanToken(thurman.address);
   await polemarch.setTimelock(timelock.address);
 
-  // testEnv.deployer = deployer;
-  // testEnv.users = users;
-  // testEnv.polemarch = polemarch;
-  // testEnv.weth = weth
-  // testEnv.sWETH = sWETH;
-  // testEnv.dWETH = dWETH;
-  // testEnv.thurman = thurman;
-  // testEnv.timelock = timelock;
-  // testEnv.thurmanGov = thurmanGov;
-  // return testEnv;
   return {
     deployer,
     users,
@@ -119,6 +123,7 @@ export async function createTestEnv(): TestEnv {
     weth,
     sWETH,
     dWETH,
+    gWETH,
     thurman,
     timelock,
     thurmanGov

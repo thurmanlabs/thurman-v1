@@ -14,8 +14,10 @@ library Types {
     uint256 totalDebt;
     uint256 borrowCap;
     uint256 supplyCap;
+    uint256 collateralFactor; // expressed in ray
     address sTokenAddress;
     address dTokenAddress;
+    address gTokenAddress;
     uint128 accruedToExchequerSafe;
   }
 
