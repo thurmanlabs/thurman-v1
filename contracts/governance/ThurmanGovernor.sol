@@ -10,6 +10,7 @@ import {GovernorVotesQuorumFractionUpgradeable} from "@openzeppelin/contracts-up
 import {GovernorTimelockControlUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
 import {TimelockControllerUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
 import {IGovernorUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/IGovernorUpgradeable.sol";
+// import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract ThurmanGovernor is GovernorUpgradeable, GovernorCompatibilityBravoUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable, GovernorTimelockControlUpgradeable {
     uint256 public _votingDelay;
@@ -46,17 +47,14 @@ contract ThurmanGovernor is GovernorUpgradeable, GovernorCompatibilityBravoUpgra
     }
 
     function votingDelay() public view override returns (uint256) {
-        // return 6575; // 1 day
         return _votingDelay;
     }
 
     function votingPeriod() public view override returns (uint256) {
-        // return 46027; // 1 week
         return _votingPeriod;
     }
 
     function proposalThreshold() public view override returns (uint256) {
-        // return 0;
         return _proposalThreshold;
     }
 

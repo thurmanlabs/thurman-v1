@@ -11,11 +11,36 @@ const USDC_ADDRESS_GOERLI = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 const USDC_ADDRESS_MAINNET = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const WETH_DECIMALS = 18;
 const USDC_DECIMALS = 6;
-// CHANGE BEFORE MAINNET DEPLOY
-const timelockMinDelay = 1;
-const govVotingDelay = 0;
-const govVotingPeriod = 137;
-const govProposalThreshold = 0;
+
+interface IDeployConfig {
+  [key: string]: {
+    timelockMinDelay: number;
+    govVotingDelay: number;
+    govVotingPeriod: number;
+    govProposalThreshold: number;
+  };
+}
+
+const deployConfig: IDeployConfig = {
+  "mainnet": {
+    timelockMinDelay: 7200,
+    govVotingDelay: 7200,
+    govVotingPeriod: 50400,
+    govProposalThreshold: 0,
+  },
+  "goerli": {
+    timelockMinDelay: 0,
+    govVotingDelay: 0,
+    govVotingPeriod: 40,
+    govProposalThreshold: 0,
+  },
+  "hardhat": {
+    timelockMinDelay: 0,
+    govVotingDelay: 0,
+    govVotingPeriod: 40,
+    govProposalThreshold: 0,
+  }
+};
 
 const developmentChains = ["hardhat", "localhost"];
 
@@ -100,7 +125,7 @@ const deployPool: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await tx.wait();
     let exchequer: Types.ExchequerStruct = await polemarch.getExchequer(wethAddress);
     log(`weth exchequer: ${exchequer}`);
-    log("Completed development chain deployment");
+
   } else {
     log("Creating a new instance of USDC contract with deployer");
 
@@ -185,9 +210,8 @@ const deployPool: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await thurman.deployTransaction.wait(1);
 
   const Timelock = await ethers.getContractFactory("ThurmanTimelock");
-  // REMEMBER TO CHANGE DELAYS AND GOV CONFIG BEFORE MAINNET DEPLOYMENT
   timelock = await upgrades.deployProxy(Timelock, [
-    timelockMinDelay,
+    deployConfig[network.name].timelockMinDelay,
     [deployer.address],
     [deployer.address],
     deployer.address,
@@ -199,9 +223,9 @@ const deployPool: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     thurman.address,
     timelock.address,
     "ThurmanDAO",
-    govVotingDelay,
-    govVotingPeriod,
-    govProposalThreshold
+    deployConfig[network.name].govVotingDelay,
+    deployConfig[network.name].govVotingPeriod,
+    deployConfig[network.name].govProposalThreshold
   ]);
   await thurmanGov.deployTransaction.wait(1);
 
@@ -211,6 +235,7 @@ const deployPool: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await polemarch.setThurmanToken(thurman.address);
   await polemarch.setTimelock(timelock.address);
+  log(`Completed development ${network.name} chain deployment`);
 
   if (
     !developmentChains.includes(network.name) &&
@@ -220,6 +245,9 @@ const deployPool: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await verify(sUSDC.address, []);
     await verify(dUSDC.address, []);
     await verify(gUSDC.address, []);
+    await verify(thurman.address, []);
+    await verify(timelock.address, []);
+    await verify(thurmanGov.address, []);
   } 
 };
 
