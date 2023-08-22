@@ -52,6 +52,19 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 		}
 	}
 
+	function transferOnLiquidation(
+		address from, 
+		address to, 
+		uint256 amount
+	) external onlyPolemarch {
+		uint256 fromBalanceBefore = balanceOf(from);
+		uint256 toBalanceBefore = balanceOf(to);
+
+		uint256 index = POLEMARCH.getNormalizedReturn(_underlyingAsset);
+		super._transfer(from, to, amount.rayDiv(index));
+		return true;
+	}
+
 	function transferUnderlying(address to, uint256 amount) external virtual override onlyPolemarch {
 		IERC20(_underlyingAsset).transfer(to, amount);
 	}

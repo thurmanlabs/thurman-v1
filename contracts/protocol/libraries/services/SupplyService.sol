@@ -60,6 +60,7 @@ library SupplyService {
 
 	function withdraw(
 		mapping(address => Types.Exchequer) storage exchequers,
+		mapping(address => Types.LineOfCredit) storage linesOfCredit,
 		address underlyingAsset,
 		address governanceAsset,
 		uint256 amount
@@ -74,10 +75,12 @@ library SupplyService {
 			msg.sender,
 			exchequer.totalDebt
 		);
+		uint256 borrowMax = linesOfCredit[msg.sender].borrowMax;
 		StrategusService.guardWithdraw(
 			exchequer, 
 			userBalance, 
-			withdrawableBalance, 
+			withdrawableBalance,
+			borrowMax,
 			amount
 		);
 

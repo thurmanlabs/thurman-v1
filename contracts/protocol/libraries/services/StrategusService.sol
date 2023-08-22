@@ -53,12 +53,14 @@ library StrategusService {
 		Types.Exchequer storage exchequer,
 		uint256 userBalance,
 		uint256 withdrawableBalance,
+		uint236 borrowMax,
 		uint256 amount
 	) internal view {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(userBalance >= amount, "USER_BALANCE_TOO_LOW");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(amount <= withdrawableBalance, "WITHDRAWABLE_BALANCE_TOO_LOW");
+		require(IERC20(exchequer.dTokenAddress).balanceOf(msg.sender) + amount < borrowMax * 0.5);
 		// add logic to see if the withdrawable amount of the exchequer and the user's proportion of
 		// the exchequer is large enough for the withdrawal
 		// would need to brainstorm some logic for this [different than collateralized lending]
@@ -76,6 +78,7 @@ library StrategusService {
 		require(borrowMax != 0, "INVALID_BORROW_MAX");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(exchequer.borrowingEnabled, "BORROWING_NOT_ENABLED");
+		require(IERC20(underlyingAsset).balanceOf(borrower) > borrowMax * 0.5);
 		// add requirement using debt tokens for the borrow cap
 		require(IERC20(underlyingAsset).balanceOf(exchequer.sTokenAddress) >= borrowMax, 
 			"NOT_ENOUGH_UNDERLYING_ASSET_BALANCE"
@@ -117,7 +120,7 @@ library StrategusService {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(linesOfCredit[borrower].borrowMax != 0, "USER_DOES_NOT_HAVE_LINE_OF_CREDIT");
-		require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
+		// require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
 		require(block.timestamp < linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_EXPIRED");
 	}
 
@@ -135,8 +138,8 @@ library StrategusService {
 		mapping(address => Types.LineOfCredit) storage linesOfCredit,
 		address borrower
 	) internal view {
-		require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
-		require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
+		// require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
+		// require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
 		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) < 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_IS_NOT_ZERO");
 	}
 }

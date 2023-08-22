@@ -69,7 +69,7 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		address underlyingAsset,
 		uint256 amount
 	) public virtual override {
-		SupplyService.withdraw(_exchequers, underlyingAsset, _THURMAN, amount);
+		SupplyService.withdraw(_exchequers, _linesOfCredit, underlyingAsset, _THURMAN, amount);
 	}
 
 	function deleteExchequer(address underlyingAsset) external onlyOwner {

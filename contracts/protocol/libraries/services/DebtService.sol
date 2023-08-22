@@ -166,6 +166,7 @@ library DebtService {
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
+		// handle liquidation here
 		IERC20(underlyingAsset).transferFrom(
 			exchequer.gTokenAddress, 
 			exchequer.sTokenAddress, 
