@@ -14,6 +14,17 @@ interface ISToken is IERC20Upgradeable, IScaledBalanceToken {
 
 	function transferUnderlyingToExchequerSafe(uint256 amount) external;
 
+	function transferOnLiquidation(
+		address from, 
+		address to, 
+		uint256 amount
+	) external onlyPolemarch;
+
+	function transferOnOrigination(
+		address from,
+		uint256 amount
+	) external onlyPolemarch;
+
 	function withdrawableBalance(
 		address user,
 		uint256 totalDebt

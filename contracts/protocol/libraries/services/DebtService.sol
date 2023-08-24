@@ -81,7 +81,8 @@ library DebtService {
 		linesOfCredit[borrower].id = uint128(linesOfCreditCount + 1);
 		linesOfCredit[borrower].deliquent = false;		
 		linesOfCredit[borrower].borrowMax = borrowMax;
-		IGToken(exchequer.gTokenAddress).transferUnderlyingToExchequerSafe(protocolBorrowFee);
+		// IGToken(exchequer.gTokenAddress).transferUnderlyingToExchequerSafe(protocolBorrowFee);
+		ISToken(exchequer.sTokenAddress).transferOnOrigination(borrower, protocolBorrowFee);
 		emit CreateLineOfCredit(
 			linesOfCredit[borrower].id,
 			rate,
@@ -165,13 +166,46 @@ library DebtService {
 			borrower
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
+		uint256 collateralBalance = ISToken(exchequer.sTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
 		// handle liquidation here
-		IERC20(underlyingAsset).transferFrom(
-			exchequer.gTokenAddress, 
-			exchequer.sTokenAddress, 
-			remainingBalance
+		address exchequerSafe = ISToken(exchequer.sTokenAddress).getExchequerSafe();
+		ISToken(exchequer.sTokenAddress).transferOnLiquidation(
+			borrower,
+			exchequerSafe,
+			collateralBalance
 		);
+		ISToken(exchequer.sTokenAddress).transferUnderlying(
+			exchequer.sTokenAddress, 
+			collateralBalance
+		);
+		IDToken(exchequer.dTokenAddress).burn(
+			borrower,
+			collateralBalance
+		);
+
+		uint256 grantCollateralBalance = IERC20(underlyingAsset).balanceOf(exchequer.gTokenAddress);
+
+		if (remainingBalance > collateralBalance) {
+			uint256 postLiquidationBalance = remainingBalance - collateralBalance;
+		} else {
+			uint256 postLiquidationBalance = 0;
+		}
+
+		if (postLiquidationBalance > grantCollateralBalance) {
+			IERC20(underlyingAsset).transferFrom(
+				exchequer.gTokenAddress, 
+				exchequer.sTokenAddress, 
+				grantCollateralBalance
+			);
+		} else {
+			IERC20(underlyingAsset).transferFrom(
+				exchequer.gTokenAddress, 
+				exchequer.sTokenAddress, 
+				postLiquidationBalance
+			);
+		}
+
 		emit Delinquent(
 			linesOfCredit[borrower].id,
 			borrower,
