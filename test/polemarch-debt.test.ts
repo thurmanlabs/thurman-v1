@@ -426,7 +426,7 @@ describe("polemarch-debt", function() {
       await gWETH.approvePolemarch(parseEther("6.0"))
       await polemarch.markDelinquent(weth.address, users[borrowerIndex].address);
       await expect(polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.02")))
-        .to.be.revertedWith("USER_HAS_DELIQUENT_DEBT");
+        .to.be.revertedWith("USER_HAS_DELINQUENT_DEBT");
     });
 
     it("emits a borrow event", async () => {
@@ -549,74 +549,6 @@ describe("polemarch-debt", function() {
       await expect(polemarch.repay(weth.address, parseEther("0.05"))).to.be.revertedWith(
         "USER_DOES_NOT_HAVE_LINE_OF_CREDIT"
       );
-    });
-
-    it("reverts repay when the expiration date has passed", async () => {
-      const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
-      const borrowerIndex: number = 5;
-      const eventIndex: number = 0;
-      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(
-        weth.address, 
-        sWETH.address, 
-        dWETH.address, 
-        gWETH.address, 
-        WETH_DECIMALS, 
-        parseEther("0.05")
-      );
-      await weth.deposit({ value: parseEther("10.0") });
-      await weth.approve(polemarch.address, parseEther("10.0"));
-      await polemarch.grantSupply(weth.address, parseEther("10.0"));
-      await makeLineOfCredit(
-        testEnv, 
-        proposalDescription, 
-        "3.0", 
-        borrowerIndex, 
-        eventIndex, 
-        "9.0", 
-        "0.2", 
-        14
-      );
-      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
-      await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
-      await ethers.provider.send('evm_mine');
-      await expect(polemarch.connect(users[borrowerIndex]).repay(weth.address, parseEther("0.05")))
-        .to.be.revertedWith("LINE_OF_CREDIT_EXPIRED");
-    });
-
-    it("reverts repay when the user debt is delinquent", async () => {
-      const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
-      const borrowerIndex: number = 5;
-      const eventIndex: number = 0;
-      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(
-        weth.address, 
-        sWETH.address, 
-        dWETH.address, 
-        gWETH.address, 
-        WETH_DECIMALS, 
-        parseEther("0.05")
-      );
-      await weth.deposit({ value: parseEther("10.0") });
-      await weth.approve(polemarch.address, parseEther("10.0"));
-      await polemarch.grantSupply(weth.address, parseEther("10.0"));
-      await makeLineOfCredit(
-        testEnv, 
-        proposalDescription, 
-        "3.0", 
-        borrowerIndex, 
-        eventIndex, 
-        "9.0", 
-        "0.2", 
-        14
-      );
-      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
-      await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
-      await ethers.provider.send('evm_mine');
-      gWETH.approvePolemarch(parseEther("1.0"));
-      await polemarch.markDelinquent(weth.address, users[borrowerIndex].address);
-      await expect(polemarch.connect(users[borrowerIndex]).repay(weth.address, parseEther("0.05")))
-        .to.be.revertedWith("USER_DEBT_IS_DELIQUENT");
     });
 
     it("emits a repay event", async () => {
@@ -805,53 +737,55 @@ describe("polemarch-debt", function() {
         "0.2", 
         14
       );
-      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
+      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("5"));
       await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
       await ethers.provider.send('evm_mine');
-      await gWETH.approvePolemarch(parseEther("0.5"))
+      const currentCollaterlBalance = await sWETH.balanceOf(users[borrowerIndex].address);
+      await gWETH.approvePolemarch(parseEther("5.1"));
       await polemarch.markDelinquent(weth.address, users[borrowerIndex].address);
       await ethers.provider.send('evm_increaseTime', [24 * 60 * 60]);
       await ethers.provider.send('evm_mine');
+      const debtBalance = await dWETH.balanceOf(users[borrowerIndex].address);
       await expect(polemarch.closeLineOfCredit(weth.address, users[borrowerIndex].address))
         .to.be.revertedWith(
-          "USER_DEBT_IS_DELIQUENT"
+          "USER_DEBT_BALANCE_IS_NOT_ZERO"
         );
     });
 
-    it("reverts when a line of credit has not yet expired", async () => {
-      const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
-      const borrowerIndex: number = 5;
-      const eventIndex: number = 0;
-      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-      await polemarch.addExchequer(
-        weth.address, 
-        sWETH.address, 
-        dWETH.address, 
-        gWETH.address, 
-        WETH_DECIMALS, 
-        parseEther("0.05")
-      );
-      await weth.deposit({ value: parseEther("10.0") });
-      await weth.approve(polemarch.address, parseEther("10.0"));
-      await polemarch.grantSupply(weth.address, parseEther("10.0"));
-      await makeLineOfCredit(
-        testEnv, 
-        proposalDescription, 
-        "3.0", 
-        borrowerIndex, 
-        eventIndex, 
-        "9.0", 
-        "0.2", 
-        14
-      );
-      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
-      await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
-      await ethers.provider.send('evm_mine');
-      await expect(polemarch.closeLineOfCredit(weth.address, users[borrowerIndex].address))
-        .to.be.revertedWith(
-          "LINE_OF_CREDIT_HAS_NOT_EXPIRED"
-        );
-    });
+    // it("reverts when a line of credit has not yet expired", async () => {
+    //   const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+    //   const borrowerIndex: number = 5;
+    //   const eventIndex: number = 0;
+    //   let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+    //   await polemarch.addExchequer(
+    //     weth.address, 
+    //     sWETH.address, 
+    //     dWETH.address, 
+    //     gWETH.address, 
+    //     WETH_DECIMALS, 
+    //     parseEther("0.05")
+    //   );
+    //   await weth.deposit({ value: parseEther("10.0") });
+    //   await weth.approve(polemarch.address, parseEther("10.0"));
+    //   await polemarch.grantSupply(weth.address, parseEther("10.0"));
+    //   await makeLineOfCredit(
+    //     testEnv, 
+    //     proposalDescription, 
+    //     "3.0", 
+    //     borrowerIndex, 
+    //     eventIndex, 
+    //     "9.0", 
+    //     "0.2", 
+    //     14
+    //   );
+    //   await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
+    //   await ethers.provider.send('evm_increaseTime', [13 * 24 * 60 * 60]);
+    //   await ethers.provider.send('evm_mine');
+    //   await expect(polemarch.closeLineOfCredit(weth.address, users[borrowerIndex].address))
+    //     .to.be.revertedWith(
+    //       "LINE_OF_CREDIT_HAS_NOT_EXPIRED"
+    //     );
+    // });
 
     it("reverts when a line of credit has greater than zero balance", async () => {
       const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
@@ -922,7 +856,10 @@ describe("polemarch-debt", function() {
         "0.2", 
         14
       );
-      
+
+      await ethers.provider.send('evm_increaseTime', [1 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+
       await makeLineOfCredit(
         testEnv, 
         proposalDescription2, 

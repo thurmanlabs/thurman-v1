@@ -9,6 +9,7 @@ interface IPolemarch {
 	event Supply(address indexed exchequer, address indexed user, uint256 amount);
 	event GrantSupply(address indexed exchequer, address indexed user, uint256 amount);
 	event Withdraw(address indexed exchequer, address indexed user, uint256 amount);
+	event GrantWithdraw(address indexed exchequer, address indexed user, uint256 amount);
 	event CreateLineOfCredit(
 		uint128 indexed id,
 		uint128 rate,
@@ -51,6 +52,8 @@ interface IPolemarch {
 	function grantSupply(address underlyingAsset, uint256 amount) external;
 	
 	function withdraw(address underlyingAsset, uint256 amount) external;
+
+	function grantWithdraw(address underlyingAsset, uint256 amount) external;
 
 	function createLineOfCredit(
 		address borrower,

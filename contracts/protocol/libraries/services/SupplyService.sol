@@ -17,6 +17,7 @@ library SupplyService {
 	event Supply(address indexed exchequer, address indexed user, uint256 amount);
 	event GrantSupply(address indexed exchequer, address indexed user, uint256 amount);
 	event Withdraw(address indexed exchequer, address indexed user, uint256 amount);
+	event GrantWithdraw(address indexed exchequer, address indexed user, uint256 amount);
 
 	function addSupply(
 		mapping(address => Types.Exchequer) storage exchequers,
@@ -48,19 +49,16 @@ library SupplyService {
 		uint256 amount
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
-		// exchequer.update()
 		StrategusService.guardAddGrantSupply(exchequer, amount);
 		IERC20(underlyingAsset).transferFrom(msg.sender, exchequer.gTokenAddress, amount);
 		IGToken(exchequer.gTokenAddress).mint(msg.sender, amount);
 		IThurmanToken(governanceAsset).mint(msg.sender, amount);
-		// exchequer.updateSupplyRate();
 
 		emit GrantSupply(underlyingAsset, msg.sender, amount);
 	}
 
 	function withdraw(
 		mapping(address => Types.Exchequer) storage exchequers,
-		mapping(address => Types.LineOfCredit) storage linesOfCredit,
 		address underlyingAsset,
 		address governanceAsset,
 		uint256 amount
@@ -75,12 +73,10 @@ library SupplyService {
 			msg.sender,
 			exchequer.totalDebt
 		);
-		uint256 borrowMax = linesOfCredit[msg.sender].borrowMax;
 		StrategusService.guardWithdraw(
 			exchequer, 
 			userBalance, 
 			withdrawableBalance,
-			borrowMax,
 			amount
 		);
 
@@ -93,5 +89,24 @@ library SupplyService {
 		exchequer.updateSupplyRate();
 
 		emit Withdraw(underlyingAsset, msg.sender, amount);
+	}
+
+	function grantWithdraw(
+		mapping(address => Types.Exchequer) storage exchequers,
+		address underlyingAsset,
+		address governanceAsset,
+		uint256 amount
+	) internal {
+		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
+		uint256 userBalance = IGToken(exchequer.gTokenAddress).balanceOf(msg.sender);
+		StrategusService.guardGrantWithdraw(
+			exchequer,
+			userBalance,
+			amount
+		);
+		IGToken(exchequer.gTokenAddress).burn(msg.sender, amount);
+		IThurmanToken(governanceAsset).burn(msg.sender, amount);
+
+		emit GrantWithdraw(underlyingAsset, msg.sender, amount);
 	}
 }

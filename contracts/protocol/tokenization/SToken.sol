@@ -18,6 +18,11 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
  	address internal _exchequerSafe;
  	address internal _underlyingAsset;
 
+ 	/// @custom:oz-upgrades-unsafe-allow constructor
+ 	constructor() {
+ 	    _disableInitializers();
+ 	}
+
 
 	function initialize(
 		IPolemarch polemarch,

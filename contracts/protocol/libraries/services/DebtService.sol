@@ -65,7 +65,8 @@ library DebtService {
 		uint40 termDays
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
-		uint256 protocolBorrowFee = exchequer.calculateProtocolFee(borrowMax, termDays);
+		uint256 protocolBorrowFee = exchequer.calculateProtocolFee(borrowMax);
+		// uint256 protocolBorrowFee = 0; // TEMP
 		StrategusService.guardCreateLineOfCredit(
 			exchequer,
 			linesOfCredit,
@@ -81,6 +82,7 @@ library DebtService {
 		linesOfCredit[borrower].id = uint128(linesOfCreditCount + 1);
 		linesOfCredit[borrower].deliquent = false;		
 		linesOfCredit[borrower].borrowMax = borrowMax;
+		exchequer.totalDebt += linesOfCredit[borrower].borrowMax;
 		// IGToken(exchequer.gTokenAddress).transferUnderlyingToExchequerSafe(protocolBorrowFee);
 		ISToken(exchequer.sTokenAddress).transferOnOrigination(borrower, protocolBorrowFee);
 		emit CreateLineOfCredit(
@@ -166,33 +168,44 @@ library DebtService {
 			borrower
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
-		uint256 collateralBalance = ISToken(exchequer.sTokenAddress).balanceOf(borrower);
+		uint256 userBalance = ISToken(exchequer.sTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
 		// handle liquidation here
 		address exchequerSafe = ISToken(exchequer.sTokenAddress).getExchequerSafe();
-		ISToken(exchequer.sTokenAddress).transferOnLiquidation(
-			borrower,
-			exchequerSafe,
-			collateralBalance
-		);
-		ISToken(exchequer.sTokenAddress).transferUnderlying(
-			exchequer.sTokenAddress, 
-			collateralBalance
-		);
-		IDToken(exchequer.dTokenAddress).burn(
-			borrower,
-			collateralBalance
-		);
-
-		uint256 grantCollateralBalance = IERC20(underlyingAsset).balanceOf(exchequer.gTokenAddress);
-
-		if (remainingBalance > collateralBalance) {
-			uint256 postLiquidationBalance = remainingBalance - collateralBalance;
+		if (remainingBalance > userBalance) {
+			ISToken(exchequer.sTokenAddress).transferOnLiquidation(
+				borrower,
+				exchequerSafe,
+				userBalance
+			);
+			ISToken(exchequer.sTokenAddress).transferUnderlying(
+				exchequer.sTokenAddress, 
+				userBalance
+			);
+			IDToken(exchequer.dTokenAddress).burn(
+				borrower,
+				userBalance
+			);
 		} else {
-			uint256 postLiquidationBalance = 0;
+			ISToken(exchequer.sTokenAddress).transferOnLiquidation(
+				borrower,
+				exchequerSafe,
+				remainingBalance
+			);
+			ISToken(exchequer.sTokenAddress).transferUnderlying(
+				exchequer.sTokenAddress, 
+				remainingBalance
+			);
+			IDToken(exchequer.dTokenAddress).burn(
+				borrower,
+				remainingBalance
+			);
 		}
 
-		if (postLiquidationBalance > grantCollateralBalance) {
+		uint256 postRemainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
+		uint256 grantCollateralBalance = IERC20(underlyingAsset).balanceOf(exchequer.gTokenAddress);
+
+		if (postRemainingBalance > grantCollateralBalance) {
 			IERC20(underlyingAsset).transferFrom(
 				exchequer.gTokenAddress, 
 				exchequer.sTokenAddress, 
@@ -202,7 +215,7 @@ library DebtService {
 			IERC20(underlyingAsset).transferFrom(
 				exchequer.gTokenAddress, 
 				exchequer.sTokenAddress, 
-				postLiquidationBalance
+				postRemainingBalance
 			);
 		}
 
@@ -225,7 +238,6 @@ library DebtService {
 		// exchequer.update();
 		StrategusService.guardCloseLineOfCredit(
 			exchequer,
-			linesOfCredit,
 			borrower
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);

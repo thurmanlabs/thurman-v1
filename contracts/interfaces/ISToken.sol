@@ -18,16 +18,18 @@ interface ISToken is IERC20Upgradeable, IScaledBalanceToken {
 		address from, 
 		address to, 
 		uint256 amount
-	) external onlyPolemarch;
+	) external;
 
 	function transferOnOrigination(
 		address from,
 		uint256 amount
-	) external onlyPolemarch;
+	) external;
 
 	function withdrawableBalance(
 		address user,
 		uint256 totalDebt
 	) external returns (uint256);
+
+	function getExchequerSafe() external returns (address);
 
 }

@@ -22,6 +22,11 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		_;
 	}
 
+	/// @custom:oz-upgrades-unsafe-allow constructor
+	constructor() {
+	    _disableInitializers();
+	}
+
 	function initialize() external virtual initializer {
 		__Ownable_init();
 		_maxExchequersCount = 10;
@@ -69,7 +74,14 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		address underlyingAsset,
 		uint256 amount
 	) public virtual override {
-		SupplyService.withdraw(_exchequers, _linesOfCredit, underlyingAsset, _THURMAN, amount);
+		SupplyService.withdraw(_exchequers, underlyingAsset, _THURMAN, amount);
+	}
+
+	function grantWithdraw(
+		address underlyingAsset,
+		uint256 amount
+	) public virtual override {
+		SupplyService.grantWithdraw(_exchequers, underlyingAsset, _THURMAN, amount);
 	}
 
 	function deleteExchequer(address underlyingAsset) external onlyOwner {
