@@ -104,7 +104,7 @@ library ExchequerService {
 		uint256 borrowMax
 	) internal view returns (uint256) {
 		uint256 protocolBorrowFee = exchequer.protocolBorrowFee;
-		return uint256(borrowMax.rayMul(uint256(protocolBorrowFee)));
+		return uint256(borrowMax.wadMul(protocolBorrowFee));
 	}
 
 	function _getSupplyRate(

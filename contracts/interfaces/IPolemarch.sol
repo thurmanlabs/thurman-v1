@@ -18,6 +18,13 @@ interface IPolemarch {
 		uint256 borrowMax,
 		uint40 expirationTimestamp
 	);
+	event OriginationFee(
+		uint128 indexed id,
+		address indexed borrower,
+		address indexed exchequer,
+		uint256 borrowMax,
+		uint256 feeAmount
+	);
 	event Borrow(
 		uint128 indexed lineOfCreditId,
 		uint128 rate,

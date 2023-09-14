@@ -239,7 +239,9 @@ const upgradePolemarch: DeployFunction = async (hre: HardhatRuntimeEnvironment) 
     !developmentChains.includes(network.name) &&
     process.env.ETHERSCAN_API_KEY
   ) {
-    await verify(thurmanGov2.address, []);
+    await verify(polemarch.address, []);
+    await verify(sToken.address, []);
+    await verify(gToken.address, []);
   } 
 }
 

@@ -89,6 +89,7 @@ library StrategusService {
 		require(exchequer.totalDebt + borrowMax <= exchequer.borrowCap || exchequer.borrowCap == 0, 
 			"EXCHEQUER_MUST_STAY_BELOW_BORROW_CAP"
 		);
+		uint256 userBalance = ISToken(exchequer.sTokenAddress).balanceOf(borrower);
 		uint256 decimalConversion = (10 ** 18 / 10 ** exchequer.decimals);
 		uint256 projectedTotalDebtWad = (exchequer.totalDebt + borrowMax) * decimalConversion;
 		uint256 projectedTotalDebtRay = projectedTotalDebtWad.wadToRay();
@@ -99,8 +100,12 @@ library StrategusService {
 		uint256 projectedCollateralFactor = projectedTotalDebtRay.rayDiv(
 			totalCollateralRay
 		);
+		require(userBalance > protocolBorrowFee, "BORROWER_CANNOT_PAY_FEE");
 		require(projectedCollateralFactor < exchequer.collateralFactor.wadToRay(), "NOT_ENOUGH_COLLATERAL");
-		require(linesOfCredit[borrower].underlyingAsset == address(0), "USER_ALREADY_HAS_BORROW_POSITION");
+		require(linesOfCredit[borrower].expirationTimestamp < block.timestamp || linesOfCredit[borrower].expirationTimestamp == 0,
+			"LINE_OF_CREDIT_NOT_EXPIRED"
+		);
+		// require(linesOfCredit[borrower].underlyingAsset == address(0), "USER_ALREADY_HAS_BORROW_POSITION");
 	}
 
 	function guardBorrow(
@@ -139,13 +144,13 @@ library StrategusService {
 		address borrower
 	) internal view {
 		require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
-		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) > 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_APPROX_ZERO");
+		// require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) > 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_APPROX_ZERO");
 	}
 
-	function guardCloseLineOfCredit(
-		Types.Exchequer storage exchequer,
-		address borrower
-	) internal view {
-		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) < 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_IS_NOT_ZERO");
-	}
+	// function guardCloseLineOfCredit(
+	// 	Types.Exchequer storage exchequer,
+	// 	address borrower
+	// ) internal view {
+	// 	require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) < 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_IS_NOT_ZERO");
+	// }
 }
