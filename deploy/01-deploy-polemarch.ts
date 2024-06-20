@@ -5,9 +5,12 @@ import { parseEther, parseUnits } from "ethers/lib/utils";
 import { verify } from "../utils/verify";
 import { upgrades } from "hardhat";
 import usdcGoerli from "../abi/usdc-abi.json";
+import usdcSepolia from "../abi/usdc-sepolia-abi.json";
 import usdcMainnet from "../abi/usdc-mainnet-abi.json";
 
+
 const USDC_ADDRESS_GOERLI = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+const USDC_ADDRESS_SEPOLIA = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 const USDC_ADDRESS_MAINNET = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const WETH_DECIMALS = 18;
 const USDC_DECIMALS = 6;
@@ -29,6 +32,12 @@ const deployConfig: IDeployConfig = {
     govProposalThreshold: 0,
   },
   "goerli": {
+    timelockMinDelay: 0,
+    govVotingDelay: 0,
+    govVotingPeriod: 40,
+    govProposalThreshold: 0,
+  },
+  "sepolia": {
     timelockMinDelay: 0,
     govVotingDelay: 0,
     govVotingPeriod: 40,
@@ -133,10 +142,18 @@ const deployPool: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       log("mainnet USDC config");
       usdcAddress = USDC_ADDRESS_MAINNET;
       usdcAbi = usdcMainnet.abi;
-    } else {
+    } 
+
+    if (network.name === "goerli") {
       log("goerli USDC config");
       usdcAddress = USDC_ADDRESS_GOERLI;
       usdcAbi = usdcGoerli.abi;
+    }
+
+    if (network.name === "sepolia") {
+      log("sepolia USDC config");
+      usdcAddress = USDC_ADDRESS_SEPOLIA;
+      usdcAbi = usdcSepolia.abi;
     }
 
     const usdc = await new ethers.Contract(

@@ -131,7 +131,7 @@ export async function makeLocProposal(
   );
 
   let filterFrom = thurmanGov.filters.ProposalCreated(null);
-  let data = await thurmanGov.queryFilter(filterFrom, -10000);
+  let data = await thurmanGov.queryFilter(filterFrom, -1000000);
   const proposalId = data[eventIndex].args[0];
   return { locCallData, proposalId };
 }

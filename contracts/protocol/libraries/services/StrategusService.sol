@@ -59,9 +59,16 @@ library StrategusService {
 		require(userBalance >= amount, "USER_BALANCE_TOO_LOW");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(amount <= withdrawableBalance, "WITHDRAWABLE_BALANCE_TOO_LOW");
-		// add logic to see if the withdrawable amount of the exchequer and the user's proportion of
-		// the exchequer is large enough for the withdrawal
-		// would need to brainstorm some logic for this [different than collateralized lending]
+	}
+
+	function guardGrantWithdraw(
+		Types.Exchequer storage exchequer,
+		uint256 userBalance,
+		uint256 amount
+	) internal view {
+		require(amount != 0, "INVALID_AMOUNT");
+		require(userBalance >= amount, "USER_BALANCE_TOO_LOW");
+		require(exchequer.active, "EXCHEQUER_INACTIVE");
 	}
 
 	function guardCreateLineOfCredit(
@@ -76,19 +83,28 @@ library StrategusService {
 		require(borrowMax != 0, "INVALID_BORROW_MAX");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(exchequer.borrowingEnabled, "BORROWING_NOT_ENABLED");
-		// add requirement using debt tokens for the borrow cap
 		require(IERC20(underlyingAsset).balanceOf(exchequer.sTokenAddress) >= borrowMax, 
 			"NOT_ENOUGH_UNDERLYING_ASSET_BALANCE"
 		);
 		require(exchequer.totalDebt + borrowMax <= exchequer.borrowCap || exchequer.borrowCap == 0, 
 			"EXCHEQUER_MUST_STAY_BELOW_BORROW_CAP"
 		);
-		uint256 projectedTotalDebt = (exchequer.totalDebt + borrowMax + protocolBorrowFee).wadToRay();
-		uint256 projectedCollateralFactor = projectedTotalDebt.rayDiv(
-			IERC20(underlyingAsset).balanceOf(exchequer.gTokenAddress).wadToRay()
+		uint256 userBalance = ISToken(exchequer.sTokenAddress).balanceOf(borrower);
+		uint256 decimalConversion = (10 ** 18 / 10 ** exchequer.decimals);
+		uint256 projectedTotalDebtWad = (exchequer.totalDebt + borrowMax) * decimalConversion;
+		uint256 projectedTotalDebtRay = projectedTotalDebtWad.wadToRay();
+		uint256 sTokenBalance = IERC20(underlyingAsset).balanceOf(exchequer.sTokenAddress);
+		uint256 gTokenBalance = IERC20(underlyingAsset).balanceOf(exchequer.gTokenAddress);
+		uint256 totalCollateralWad = (sTokenBalance + gTokenBalance - protocolBorrowFee) * decimalConversion;
+		uint256 totalCollateralRay = totalCollateralWad.wadToRay();
+		uint256 projectedCollateralFactor = projectedTotalDebtRay.rayDiv(
+			totalCollateralRay
 		);
-		require(projectedCollateralFactor < exchequer.collateralFactor, "NOT_ENOUGH_COLLATERAL");
-		require(linesOfCredit[borrower].underlyingAsset == address(0), "USER_ALREADY_HAS_BORROW_POSITION");
+		require(userBalance > protocolBorrowFee, "BORROWER_CANNOT_PAY_FEE");
+		require(projectedCollateralFactor < exchequer.collateralFactor.wadToRay(), "NOT_ENOUGH_COLLATERAL");
+		require(linesOfCredit[borrower].expirationTimestamp < block.timestamp || linesOfCredit[borrower].expirationTimestamp == 0,
+			"LINE_OF_CREDIT_NOT_EXPIRED"
+		);
 	}
 
 	function guardBorrow(
@@ -101,7 +117,7 @@ library StrategusService {
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(exchequer.borrowingEnabled, "BORROWING_NOT_ENABLED");
 		require(linesOfCredit[borrower].borrowMax != 0, "USER_DOES_NOT_HAVE_LINE_OF_CREDIT");
-		require(linesOfCredit[borrower].deliquent == false, "USER_HAS_DELIQUENT_DEBT");
+		require(linesOfCredit[borrower].deliquent == false, "USER_HAS_DELINQUENT_DEBT");
 		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) + amount <= linesOfCredit[borrower].borrowMax,
 			"USER_CANNOT_BORROW_OVER_MAX_LIMIT"
 		);
@@ -117,8 +133,6 @@ library StrategusService {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(linesOfCredit[borrower].borrowMax != 0, "USER_DOES_NOT_HAVE_LINE_OF_CREDIT");
-		require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
-		require(block.timestamp < linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_EXPIRED");
 	}
 
 	function guardDelinquency(
@@ -127,16 +141,12 @@ library StrategusService {
 		address borrower
 	) internal view {
 		require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
-		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) > 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_APPROX_ZERO");
 	}
 
-	function guardCloseLineOfCredit(
-		Types.Exchequer storage exchequer,
-		mapping(address => Types.LineOfCredit) storage linesOfCredit,
-		address borrower
-	) internal view {
-		require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
-		require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
-		require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) < 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_IS_NOT_ZERO");
-	}
+	// function guardCloseLineOfCredit(
+	// 	Types.Exchequer storage exchequer,
+	// 	address borrower
+	// ) internal view {
+	// 	require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) < 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_IS_NOT_ZERO");
+	// }
 }

@@ -18,6 +18,11 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
  	address internal _exchequerSafe;
  	address internal _underlyingAsset;
 
+ 	/// @custom:oz-upgrades-unsafe-allow constructor
+ 	constructor() {
+ 	    _disableInitializers();
+ 	}
+
 
 	function initialize(
 		IPolemarch polemarch,
@@ -50,6 +55,27 @@ contract SToken is ScaledBalanceTokenBase, ISToken {
 		if (account != address(this)) {
 			IERC20(_underlyingAsset).transfer(account, amount);
 		}
+	}
+
+	function transferOnLiquidation(
+		address from, 
+		address to, 
+		uint256 amount
+	) external onlyPolemarch {
+		// uint256 fromBalanceBefore = balanceOf(from);
+		// uint256 toBalanceBefore = balanceOf(to);
+
+		uint256 index = POLEMARCH.getNormalizedReturn(_underlyingAsset);
+		super._transfer(from, to, amount.rayDiv(index));
+		// return true;
+	}
+
+	function transferOnOrigination(
+		address from,
+		uint256 amount
+	) external onlyPolemarch {
+		uint256 index = POLEMARCH.getNormalizedReturn(_underlyingAsset);
+		super._transfer(from, _exchequerSafe, amount.rayDiv(index));
 	}
 
 	function transferUnderlying(address to, uint256 amount) external virtual override onlyPolemarch {

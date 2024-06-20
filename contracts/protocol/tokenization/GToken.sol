@@ -18,6 +18,11 @@ contract GToken is ERC20Base, OwnableUpgradeable, IGToken {
  	address internal _exchequerSafe;
  	address internal _underlyingAsset;
 
+ 	/// @custom:oz-upgrades-unsafe-allow constructor
+ 	constructor() {
+ 	    _disableInitializers();
+ 	}
+
  	function initialize(
  		IPolemarch polemarch,
  		string memory name,
@@ -35,6 +40,13 @@ contract GToken is ERC20Base, OwnableUpgradeable, IGToken {
 
  	function mint(address caller, uint256 amount) external onlyPolemarch {
  		_mint(caller, amount);
+ 	}
+
+ 	function burn(address caller, uint256 amount) external onlyPolemarch {
+ 		_burn(caller, amount);
+ 		if (caller != address(this)) {
+ 			IERC20(_underlyingAsset).transfer(caller, amount);
+ 		}
  	}
 
  	// function approve(address spender, uint256 amount) external virtual override(ERC20Upgradeable, IERC20Upgradeable) onlyPolemarch {

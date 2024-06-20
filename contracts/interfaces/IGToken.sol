@@ -8,6 +8,8 @@ interface IGToken is IERC20Upgradeable {
 
 	function mint(address caller, uint256 amount) external;
 
+	function burn(address caller, uint256 amount) external;
+
 	function approvePolemarch(uint256 amount) external;
 
 	function transferUnderlyingToExchequerSafe(uint256 amount) external;
