@@ -35,6 +35,17 @@ const polemarchUpgradeConfig: IPolemarchUpgradeConfig = {
     "gUSDC": {
       address: "0x23C6f81b54143660e73f3eE5A39d7E7A06E45d15"
     }
+  },
+  "sepolia": {
+    "Polemarch": {
+      address: "0xfb60D5eaE1741D6894e45c5ead36b889121827A5"
+    },
+    "sUSDC": {
+      address: "0xe15aF8636E03d7460dAd17A02eab9425BBF9F65A"
+    },
+    "gUSDC": {
+      address: "0x8A279D3bcfD6200373248772155FdF0455F6BeB2"
+    }
   }
 };
 
@@ -53,6 +64,11 @@ const upgradeConfig: IUpgradeConfig = {
     govProposalThreshold: 0,
   },
   "goerli": {
+    govVotingDelay: 0,
+    govVotingPeriod: 40,
+    govProposalThreshold: 0,
+  },
+  "sepolia": {
     govVotingDelay: 0,
     govVotingPeriod: 40,
     govProposalThreshold: 0,

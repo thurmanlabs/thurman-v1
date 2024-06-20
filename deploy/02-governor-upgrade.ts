@@ -39,6 +39,11 @@ const upgradeConfig: IUpgradeConfig = {
     govVotingPeriod: 40,
     govProposalThreshold: 0,
   },
+  "sepolia": {
+    govVotingDelay: 0,
+    govVotingPeriod: 40,
+    govProposalThreshold: 0,
+  },
   "hardhat": {
     govVotingDelay: 0,
     govVotingPeriod: 40,

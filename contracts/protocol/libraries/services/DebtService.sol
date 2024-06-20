@@ -182,57 +182,7 @@ library DebtService {
 			borrower
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
-		// uint256 userBalance = ISToken(exchequer.sTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
-		// handle liquidation here
-		// address exchequerSafe = ISToken(exchequer.sTokenAddress).getExchequerSafe();
-		// if (remainingBalance > userBalance) {
-		// 	ISToken(exchequer.sTokenAddress).transferOnLiquidation(
-		// 		borrower,
-		// 		exchequerSafe,
-		// 		userBalance
-		// 	);
-		// 	ISToken(exchequer.sTokenAddress).transferUnderlying(
-		// 		exchequer.sTokenAddress, 
-		// 		userBalance
-		// 	);
-		// 	IDToken(exchequer.dTokenAddress).burn(
-		// 		borrower,
-		// 		userBalance
-		// 	);
-		// } else {
-		// 	ISToken(exchequer.sTokenAddress).transferOnLiquidation(
-		// 		borrower,
-		// 		exchequerSafe,
-		// 		remainingBalance
-		// 	);
-		// 	ISToken(exchequer.sTokenAddress).transferUnderlying(
-		// 		exchequer.sTokenAddress, 
-		// 		remainingBalance
-		// 	);
-		// 	IDToken(exchequer.dTokenAddress).burn(
-		// 		borrower,
-		// 		remainingBalance
-		// 	);
-		// }
-
-		// uint256 postRemainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
-		// uint256 grantCollateralBalance = IERC20(underlyingAsset).balanceOf(exchequer.gTokenAddress);
-
-		// if (postRemainingBalance > grantCollateralBalance) {
-		// 	IERC20(underlyingAsset).transferFrom(
-		// 		exchequer.gTokenAddress, 
-		// 		exchequer.sTokenAddress, 
-		// 		grantCollateralBalance
-		// 	);
-		// } else {
-		// 	IERC20(underlyingAsset).transferFrom(
-		// 		exchequer.gTokenAddress, 
-		// 		exchequer.sTokenAddress, 
-		// 		postRemainingBalance
-		// 	);
-		// }
-
 		emit Delinquent(
 			linesOfCredit[borrower].id,
 			borrower,

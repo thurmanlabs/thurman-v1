@@ -105,7 +105,6 @@ library StrategusService {
 		require(linesOfCredit[borrower].expirationTimestamp < block.timestamp || linesOfCredit[borrower].expirationTimestamp == 0,
 			"LINE_OF_CREDIT_NOT_EXPIRED"
 		);
-		// require(linesOfCredit[borrower].underlyingAsset == address(0), "USER_ALREADY_HAS_BORROW_POSITION");
 	}
 
 	function guardBorrow(
@@ -134,8 +133,6 @@ library StrategusService {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
 		require(linesOfCredit[borrower].borrowMax != 0, "USER_DOES_NOT_HAVE_LINE_OF_CREDIT");
-		// require(!linesOfCredit[borrower].deliquent, "USER_DEBT_IS_DELIQUENT");
-		// require(block.timestamp < linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_EXPIRED");
 	}
 
 	function guardDelinquency(
@@ -144,7 +141,6 @@ library StrategusService {
 		address borrower
 	) internal view {
 		require(block.timestamp > linesOfCredit[borrower].expirationTimestamp, "LINE_OF_CREDIT_HAS_NOT_EXPIRED");
-		// require(IDToken(exchequer.dTokenAddress).balanceOf(borrower) > 10**(exchequer.decimals - 3), "USER_DEBT_BALANCE_APPROX_ZERO");
 	}
 
 	// function guardCloseLineOfCredit(
