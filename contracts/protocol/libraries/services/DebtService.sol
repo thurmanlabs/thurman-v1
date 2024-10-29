@@ -24,6 +24,14 @@ library DebtService {
 		uint40 expirationTimestamp
 	);
 
+	event OriginationFee(
+		uint128 indexed id,
+		address indexed borrower,
+		address indexed exchequer,
+		uint256 borrowMax,
+		uint256 feeAmount
+	);
+
 	event Borrow(
 		uint128 indexed lineOfCreditId,
 		uint128 rate,
@@ -65,7 +73,7 @@ library DebtService {
 		uint40 termDays
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
-		uint256 protocolBorrowFee = exchequer.calculateProtocolFee(borrowMax, termDays);
+		uint256 protocolBorrowFee = exchequer.calculateProtocolFee(borrowMax);
 		StrategusService.guardCreateLineOfCredit(
 			exchequer,
 			linesOfCredit,
@@ -81,7 +89,16 @@ library DebtService {
 		linesOfCredit[borrower].id = uint128(linesOfCreditCount + 1);
 		linesOfCredit[borrower].deliquent = false;		
 		linesOfCredit[borrower].borrowMax = borrowMax;
-		IGToken(exchequer.gTokenAddress).transferUnderlyingToExchequerSafe(protocolBorrowFee);
+		exchequer.totalDebt += linesOfCredit[borrower].borrowMax;
+		ISToken(exchequer.sTokenAddress).transferOnOrigination(borrower, protocolBorrowFee);
+		emit OriginationFee(
+			linesOfCredit[borrower].id,
+			borrower,
+			underlyingAsset,
+			borrowMax,
+			protocolBorrowFee
+		);
+
 		emit CreateLineOfCredit(
 			linesOfCredit[borrower].id,
 			rate,
@@ -166,11 +183,6 @@ library DebtService {
 		);
 		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
 		linesOfCredit[borrower].deliquent = true;
-		IERC20(underlyingAsset).transferFrom(
-			exchequer.gTokenAddress, 
-			exchequer.sTokenAddress, 
-			remainingBalance
-		);
 		emit Delinquent(
 			linesOfCredit[borrower].id,
 			borrower,
@@ -187,20 +199,6 @@ library DebtService {
 		address underlyingAsset
 	) internal {
 		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
-		// exchequer.update();
-		StrategusService.guardCloseLineOfCredit(
-			exchequer,
-			linesOfCredit,
-			borrower
-		);
-		uint256 remainingBalance = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
-		if (remainingBalance > 0) {
-			IERC20(underlyingAsset).transferFrom(
-				exchequer.gTokenAddress, 
-				exchequer.sTokenAddress,
-				remainingBalance
-			);
-		}
 		if (exchequer.totalDebt <= linesOfCredit[borrower].borrowMax) {
 			exchequer.totalDebt = 0;
 		} else {

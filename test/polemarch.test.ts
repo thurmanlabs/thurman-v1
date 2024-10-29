@@ -97,6 +97,23 @@ describe("Polemarch", function() {
       expect(await weth.balanceOf(sWETH.address)).to.equal(parseEther("0.1"));
     });
 
+    it("withdraws grant supply from the exchequer", async () => {
+      const { polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+      await weth.deposit({ value: parseEther("0.5") });
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+      await weth.approve(polemarch.address, parseEther("0.3"));
+      await polemarch.grantSupply(weth.address, parseEther("0.3"));
+      await polemarch.grantWithdraw(weth.address, parseEther("0.2"));
+      expect(await weth.balanceOf(gWETH.address)).to.equal(parseEther("0.1"));
+    });
+
     it("balance stays the same over time, if no debt positions exist", async () => {
       const { deployer, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
@@ -133,9 +150,9 @@ describe("Polemarch", function() {
       await weth.deposit({ value: parseEther("10.0") });
       await weth.approve(polemarch.address, parseEther("10.0"));
       await polemarch.grantSupply(weth.address, parseEther("10.0"));
-      await makeLineOfCredit(testEnv, proposalDescription, "1.0", borrowerIndex, 0, "5.0", "0.2", 14);
+      await makeLineOfCredit(testEnv, proposalDescription, "3.0", borrowerIndex, 0, "1.0", "0.2", 14);
       let lineOfCredit: Types.LineOfCreditStruct = await polemarch.getLineOfCredit(users[borrowerIndex].address);
-      expect(lineOfCredit.borrowMax).to.equal(parseEther("5.0"));
+      expect(lineOfCredit.borrowMax).to.equal(parseEther("1.0"));
     });
 
     it("borrows from line of credit", async () => {
@@ -156,7 +173,7 @@ describe("Polemarch", function() {
       await makeLineOfCredit(testEnv, proposalDescription, "1.0", borrowerIndex, 0, "5.0", "0.2", 14);
       await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.5"));
       expect(await weth.balanceOf(users[borrowerIndex].address)).to.equal(parseEther("0.5"));
-    })
+    });
 
     it("accrues interest after borrow", async () => {
       const borrowerIndex: number = 5;

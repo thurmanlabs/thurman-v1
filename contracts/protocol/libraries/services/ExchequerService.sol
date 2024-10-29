@@ -101,14 +101,10 @@ library ExchequerService {
 
 	function calculateProtocolFee(
 		Types.Exchequer storage exchequer,
-		uint256 borrowMax,
-		uint40 termDays
+		uint256 borrowMax
 	) internal view returns (uint256) {
-		uint256 termSeconds = uint256(termDays) * 1 days;
-		uint256 protocolBorrowFee = exchequer.protocolBorrowFee.wadToRay();
-		// protocolBorrowFee = protocolBorrowFee.wadToRay();
-		return uint256(borrowMax.rayMul(uint256(protocolBorrowFee)).
-			rayMul((termSeconds).rayDiv(MathUtils.SECONDS_PER_YEAR)));
+		uint256 protocolBorrowFee = exchequer.protocolBorrowFee;
+		return uint256(borrowMax.wadMul(protocolBorrowFee));
 	}
 
 	function _getSupplyRate(
