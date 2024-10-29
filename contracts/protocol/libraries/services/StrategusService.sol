@@ -52,13 +52,11 @@ library StrategusService {
 	function guardWithdraw(
 		Types.Exchequer storage exchequer,
 		uint256 userBalance,
-		uint256 withdrawableBalance,
 		uint256 amount
 	) internal view {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(userBalance >= amount, "USER_BALANCE_TOO_LOW");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
-		require(amount <= withdrawableBalance, "WITHDRAWABLE_BALANCE_TOO_LOW");
 		// add logic to see if the withdrawable amount of the exchequer and the user's proportion of
 		// the exchequer is large enough for the withdrawal
 		// would need to brainstorm some logic for this [different than collateralized lending]
