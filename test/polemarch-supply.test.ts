@@ -126,6 +126,32 @@ describe("polemarch-supply", function() {
       );
     });
 
+    it("successfully withdraws when total debt is larger than the available supply", async () => {
+      const borrowerIndex: number = 5;
+      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+      const { deployer, users, polemarch, weth, sWETH, dWETH, gWETH, thurmanGov } = testEnv;
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+
+      await weth.deposit({ value: parseEther("5.0") });
+      await weth.approve(polemarch.address, parseEther("5.0"));
+      await polemarch.supply(weth.address, parseEther("5.0"));
+
+      await makeLineOfCredit(testEnv, proposalDescription, "0.5", borrowerIndex, 0, "9.9", "0.2", 14);
+      await hre.network.provider.send("hardhat_mine", ["0xB3E2"]);
+      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("9.9"));
+
+      await expect(polemarch.withdraw(weth.address, parseEther("5.0")))
+        .to.emit(polemarch, "Withdraw")
+        .withArgs(weth.address, deployer.address, parseEther("5.0"));
+    })
+
     it("reverts withdraw when exchequer is inactive", async () => {
       const { polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
@@ -144,38 +170,5 @@ describe("polemarch-supply", function() {
         "EXCHEQUER_INACTIVE"
       );
     });
-
-    // it("reverts when user requests to withdraw more than their proportional available supply", 
-    //   async () => {
-    //     const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
-    //     const borrowerIndex: number = 5;
-    //     const eventIndex: number = 0;
-    //     let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
-    //     await polemarch.addExchequer(
-    //     weth.address, 
-    //     sWETH.address, 
-    //     dWETH.address, 
-    //     gWETH.address, 
-    //     WETH_DECIMALS, 
-    //     parseEther("0.05")
-    //   );
-    //   await weth.deposit({ value: parseEther("10.0") });
-    //   await weth.approve(polemarch.address, parseEther("10.0"));
-    //   await polemarch.grantSupply(weth.address, parseEther("10.0"));
-    //   await makeLineOfCredit(
-    //     testEnv, 
-    //     proposalDescription, 
-    //     "2.0", 
-    //     borrowerIndex, 
-    //     eventIndex, 
-    //     "9.0", 
-    //     "0.2", 
-    //     14
-    //   );
-    //     // await weth.approve(polemarch.address, parseEther("0.3"));
-    //     await expect(polemarch.connect(users[1]).withdraw(weth.address, parseEther("2.1")))
-    //       .to.be.revertedWith("WITHDRAWABLE_BALANCE_TOO_LOW");
-    //   }
-    // )
   })
 })

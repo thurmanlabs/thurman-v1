@@ -57,9 +57,6 @@ library StrategusService {
 		require(amount != 0, "INVALID_AMOUNT");
 		require(userBalance >= amount, "USER_BALANCE_TOO_LOW");
 		require(exchequer.active, "EXCHEQUER_INACTIVE");
-		// add logic to see if the withdrawable amount of the exchequer and the user's proportion of
-		// the exchequer is large enough for the withdrawal
-		// would need to brainstorm some logic for this [different than collateralized lending]
 	}
 
 	function guardGrantWithdraw(
