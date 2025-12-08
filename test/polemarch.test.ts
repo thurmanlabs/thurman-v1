@@ -224,6 +224,44 @@ describe("Polemarch", function() {
         .to.emit(polemarch, "Repay");
     });
 
+    it("owner can repay debt", async () => {
+        const { deployer, users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+        const borrowerIndex: number = 5;
+        const callerIndex: number = 1;
+        const eventIndex: number = 0;
+        let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+        await polemarch.addExchequer(
+          weth.address, 
+          sWETH.address, 
+          dWETH.address, 
+          gWETH.address, 
+          WETH_DECIMALS, 
+          parseEther("0.05")
+        );
+        await weth.deposit({ value: parseEther("10.0") });
+        // await weth.approve(polemarch.address, parseEther("10.0"));
+        // await polemarch.upply(weth.address, parseEther("10.0"));
+        await makeLineOfCredit(
+          testEnv, 
+          proposalDescription, 
+          "10.0", 
+          borrowerIndex, 
+          eventIndex, 
+          "9.0", 
+          "0.2", 
+          14
+        );
+        await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
+        await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+        await ethers.provider.send('evm_mine');
+        await weth.deposit({ value: parseEther("0.3") });
+        await weth.approve(polemarch.address, parseEther("0.3"));
+        // await polemarch.setExchequerActive(weth.address, true);
+        // await polemarch.ownerRepay(users[borrowerIndex].address, weth.address, parseEther("0.03"));
+        await expect(polemarch.connect(deployer).ownerRepay(users[borrowerIndex].address, weth.address, parseEther("0.03")))
+          .to.emit(polemarch, "Repay");
+    })
+
     it("liquidity index changes", async () => {
       const borrowerIndex: number = 5;
       let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;

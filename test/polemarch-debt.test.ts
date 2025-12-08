@@ -541,6 +541,41 @@ describe("polemarch-debt", function() {
         .to.be.revertedWith("INVALID_AMOUNT");
     });
 
+    it("reverts when the owner attempts to ownerRepay zero", async () => {
+      const { deployer, users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+      const borrowerIndex: number = 5;
+      const eventIndex: number = 0;
+      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+      await weth.deposit({ value: parseEther("10.0") });
+      await weth.approve(polemarch.address, parseEther("10.0"));
+      await polemarch.grantSupply(weth.address, parseEther("10.0"));
+      await makeLineOfCredit(
+        testEnv, 
+        proposalDescription, 
+        "10.0", 
+        borrowerIndex, 
+        eventIndex, 
+        "9.0", 
+        "0.2", 
+        14
+      );
+      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await weth.deposit({ value: parseEther("0.05") });
+      await weth.approve(polemarch.address, parseEther("0.05"));
+      await expect(polemarch.connect(deployer).ownerRepay(users[borrowerIndex].address, weth.address, parseEther("0")))
+        .to.be.revertedWith("INVALID_AMOUNT");
+    });
+
     it("reverts repay when the exchequer is inactive", async () => {
       const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
       const borrowerIndex: number = 5;
@@ -575,6 +610,40 @@ describe("polemarch-debt", function() {
         .to.be.revertedWith("EXCHEQUER_INACTIVE");
     });
 
+    it("reverts ownerRepay when the exchequer is inactive", async () => {
+      const { deployer, users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+      const borrowerIndex: number = 5;
+      const eventIndex: number = 0;
+      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+      await weth.deposit({ value: parseEther("10.0") });
+      await weth.approve(polemarch.address, parseEther("10.0"));
+      await polemarch.grantSupply(weth.address, parseEther("10.0"));
+      await makeLineOfCredit(
+        testEnv, 
+        proposalDescription, 
+        "10.0", 
+        borrowerIndex, 
+        eventIndex, 
+        "9.0", 
+        "0.2", 
+        14
+      );
+      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await polemarch.setExchequerActive(weth.address, false);
+      await expect(polemarch.ownerRepay(users[borrowerIndex].address, weth.address, parseEther("0.05")))
+        .to.be.revertedWith("EXCHEQUER_INACTIVE");
+    });
+
     it("reverts repay when the user does not have a line of credit", async () => {
       const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
       await weth.deposit({ value: parseEther("0.5") });
@@ -592,6 +661,64 @@ describe("polemarch-debt", function() {
       await expect(polemarch.repay(weth.address, parseEther("0.05"))).to.be.revertedWith(
         "USER_DOES_NOT_HAVE_LINE_OF_CREDIT"
       );
+    });
+
+    it("reverts ownerRepay when the user does not have a line of credit", async () => {
+      const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+      const borrowerIndex: number = 5;
+      await weth.deposit({ value: parseEther("0.5") });
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+      await weth.approve(polemarch.address, parseEther("0.5"));
+      await polemarch.supply(weth.address, parseEther("0.5"));
+      await polemarch.setExchequerBorrowing(weth.address, true);
+      await weth.deposit({ value: parseEther("0.05") });
+      await weth.approve(polemarch.address, parseEther("0.05"));
+      await expect(polemarch.ownerRepay(users[borrowerIndex].address, weth.address, parseEther("0.05"))).to.be.revertedWith(
+        "USER_DOES_NOT_HAVE_LINE_OF_CREDIT"
+      );
+    });
+
+    it("reverts ownerRepay when someone other than owner initiates tx", async () => {
+      const { users, polemarch, weth, sWETH, dWETH, gWETH } = testEnv;
+      const borrowerIndex: number = 5;
+      const callerIndex: number = 1;
+      const eventIndex: number = 0;
+      let proposalDescription = `Proposal #1: Create a line of credit for User #${borrowerIndex}`;
+      await polemarch.addExchequer(
+        weth.address, 
+        sWETH.address, 
+        dWETH.address, 
+        gWETH.address, 
+        WETH_DECIMALS, 
+        parseEther("0.05")
+      );
+      await weth.deposit({ value: parseEther("10.0") });
+      await weth.approve(polemarch.address, parseEther("10.0"));
+      await polemarch.grantSupply(weth.address, parseEther("10.0"));
+      await makeLineOfCredit(
+        testEnv, 
+        proposalDescription, 
+        "10.0", 
+        borrowerIndex, 
+        eventIndex, 
+        "9.0", 
+        "0.2", 
+        14
+      );
+      await polemarch.connect(users[borrowerIndex]).borrow(weth.address, parseEther("0.05"));
+      await ethers.provider.send('evm_increaseTime', [2 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+      await weth.connect(users[callerIndex]).deposit({ value: parseEther("0.5") });
+      await weth.connect(users[callerIndex]).approve(polemarch.address, parseEther("0.5"));
+      await expect(polemarch.connect(users[callerIndex]).ownerRepay(users[borrowerIndex].address, weth.address, parseEther("0.05")))
+        .to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("emits a repay event", async () => {

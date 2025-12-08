@@ -81,7 +81,15 @@ library SupplyService {
 			amount,
 			exchequer.supplyIndex
 		);
-		IThurmanToken(governanceAsset).burn(msg.sender, amount);
+
+		uint256 thurmanTokenBalance = IThurmanToken(governanceAsset).balanceOf(msg.sender);
+		
+		if (userBalance > thurmanTokenBalance) {
+			IThurmanToken(governanceAsset).burn(msg.sender, thurmanTokenBalance);
+		} else {
+			IThurmanToken(governanceAsset).burn(msg.sender, amount);	
+		}
+
 		exchequer.updateSupplyRate();
 
 		emit Withdraw(underlyingAsset, msg.sender, amount);

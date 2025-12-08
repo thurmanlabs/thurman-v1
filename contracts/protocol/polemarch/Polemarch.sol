@@ -136,6 +136,20 @@ contract Polemarch is Initializable, OwnableUpgradeable, PolemarchStorage, IPole
 		);
 	}
 
+	function ownerRepay(
+		address borrower,
+		address underlyingAsset,
+		uint256 amount
+	) external onlyOwner {
+		DebtService.ownerRepay(
+			_exchequers,
+			_linesOfCredit,
+			borrower,
+			underlyingAsset,
+			amount
+		);
+	}
+
 	function markDelinquent(address underlyingAsset, address borrower) external onlyOwner {
 		DebtService.markDelinquent(
 			_exchequers, 

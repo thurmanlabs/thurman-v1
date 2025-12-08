@@ -139,6 +139,54 @@ library DebtService {
 		);
 	}
 
+	function ownerRepay(
+		mapping(address => Types.Exchequer) storage exchequers,
+		mapping(address => Types.LineOfCredit) storage linesOfCredit,
+		address borrower,
+		address underlyingAsset,
+		uint256 amount
+	) internal {
+		Types.Exchequer storage exchequer = exchequers[underlyingAsset];
+		exchequer.update();
+		
+		StrategusService.guardRepay(
+			exchequer,
+			linesOfCredit,
+			borrower,
+			amount
+		);
+		
+		// Get borrower's actual debt balance (including accrued interest)
+		uint256 borrowerDebt = IDToken(exchequer.dTokenAddress).balanceOf(borrower);
+		
+		// Validate borrower has debt
+		require(borrowerDebt > 0, "BORROWER_HAS_NO_DEBT");
+		
+		// Cap amount to actual debt to prevent overpayment
+		uint256 repayAmount = amount > borrowerDebt ? borrowerDebt : amount;
+		
+		// Burn debt tokens
+		IDToken(exchequer.dTokenAddress).burn(
+			borrower,
+			repayAmount
+		);
+		
+		// Transfer underlying tokens from owner to exchequer
+		IERC20(underlyingAsset).transferFrom(msg.sender, exchequer.sTokenAddress, repayAmount);
+		
+		// Update state
+		exchequer.updateSupplyRate();
+		linesOfCredit[borrower].lastRepaymentTimestamp = uint40(block.timestamp);
+		
+		// Emit event with actual repayment amount
+		emit Repay(
+			linesOfCredit[borrower].id,
+			msg.sender,
+			underlyingAsset,
+			repayAmount
+		);
+	}
+
 	function repay(
 		mapping(address => Types.Exchequer) storage exchequers,
 		mapping(address => Types.LineOfCredit) storage linesOfCredit,
