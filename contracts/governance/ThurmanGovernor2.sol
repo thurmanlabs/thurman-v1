@@ -11,6 +11,7 @@ import {GovernorTimelockControlUpgradeable} from "@openzeppelin/contracts-upgrad
 import {TimelockControllerUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
 import {IGovernorUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/IGovernorUpgradeable.sol";
 
+/// @custom:oz-upgrades-from contracts/governance/ThurmanGovernor.sol:ThurmanGovernor
 contract ThurmanGovernor2 is GovernorUpgradeable, GovernorCompatibilityBravoUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable, GovernorTimelockControlUpgradeable {
     uint256 public _votingDelay;
     uint256 public _votingPeriod;
@@ -23,6 +24,23 @@ contract ThurmanGovernor2 is GovernorUpgradeable, GovernorCompatibilityBravoUpgr
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
+    }
+
+    function initialize(
+        IVotesUpgradeable _token,
+        TimelockControllerUpgradeable _timelock,
+        string memory name,
+        uint256 govVotingDelay,
+        uint256 govVotingPeriod,
+        uint256 govProposalThreshold
+    ) external initializer {
+        __Governor_init(name);
+        __GovernorVotes_init(_token);
+        __GovernorVotesQuorumFraction_init(4);
+        __GovernorTimelockControl_init(_timelock);
+        _setVotingDelay(govVotingDelay);
+        _setVotingPeriod(govVotingPeriod);
+        _setProposalThreshold(govProposalThreshold);
     }
 
     function initializeV2(
