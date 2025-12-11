@@ -3,6 +3,7 @@ pragma solidity ^0.8.8;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {ERC20VotesUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {IPolemarch} from "../interfaces/IPolemarch.sol";
 import {WadRayMath} from "../protocol/libraries/math/WadRayMath.sol";
@@ -26,9 +27,10 @@ contract ThurmanToken is ERC20Upgradeable, ERC20VotesUpgradeable {
         uint8 thurmanDecimals
 	) external initializer {
 		__ERC20_init(name, symbol);
+		__ERC20Permit_init(name);
+		__ERC20Votes_init();
         POLEMARCH = polemarch;
         _setDecimals(thurmanDecimals);
-		__ERC20Votes_init();
 	}
 
 	function _afterTokenTransfer(

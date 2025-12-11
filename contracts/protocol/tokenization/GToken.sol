@@ -31,8 +31,8 @@ contract GToken is ERC20Base, OwnableUpgradeable, IGToken {
  		address exchequerSafe,
 		address underlyingAsset
  	) external initializer {
- 		__Ownable_init();
  		ERC20Base.initialize(polemarch, name, symbol, decimals);
+ 		__Ownable_init();
  		_exchequerSafe = exchequerSafe;
  		_underlyingAsset = underlyingAsset;
  		// emit Initialized(underlyingAsset, decimals);
