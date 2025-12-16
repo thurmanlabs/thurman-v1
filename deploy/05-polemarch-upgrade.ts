@@ -13,6 +13,12 @@ interface IPolemarchUpgradeConfig {
   };
 };
 
+interface IGovernorTokenConfig {
+  [key: string]: {
+    address: string;
+  };
+}
+
 const polemarchUpgradeConfig: IPolemarchUpgradeConfig = {
   "mainnet": {
     "Polemarch": {
@@ -46,6 +52,30 @@ const polemarchUpgradeConfig: IPolemarchUpgradeConfig = {
     "gUSDC": {
       address: "0x8A279D3bcfD6200373248772155FdF0455F6BeB2"
     }
+  }
+};
+
+const governorAddressConfig: IGovernorTokenConfig = {
+  "mainnet": {
+    address: "0x6518998C230Ceb7A7AD530c7088f0747604C06f5"
+  },
+  "goerli": {
+    address: "0x5D368EBa7e692CbcbD44a85a33Eaf303968c6548"
+  },
+  "sepolia": {
+    address: "0x31565a179c836108D61E663D4C7Ed401c92B3a3D" // TODO: Add sepolia governor address
+  }
+};
+
+const thurmanTokenAddressConfig: IGovernorTokenConfig = {
+  "mainnet": {
+    address: "0xA92FC16902a12876e0C6C2eC23502d1BfC35E96F" // TODO: Add mainnet ThurmanToken address
+  },
+  "goerli": {
+    address: "0x1ecc1Cf55E17e5442b59F6493736043C0bFBBD3d" // TODO: Add goerli ThurmanToken address
+  },
+  "sepolia": {
+    address: "0x1E85dC105Aabc4cFd2E248d3a9347a006E4A189d" // TODO: Add sepolia ThurmanToken address
   }
 };
 
@@ -96,6 +126,9 @@ const upgradePolemarchOwnerRepay: DeployFunction = async (hre: HardhatRuntimeEnv
   let gToken: GToken;
   let sWETH: SToken;
   let gWETH: GToken;
+  let thurmanGov2: ThurmanGovernor2;
+  let thurmanGov: ThurmanGovernor;
+  let thurman: ThurmanToken;
 
   const { deployments, network } = hre;
   const { deploy, log } = deployments;
@@ -109,8 +142,6 @@ const upgradePolemarchOwnerRepay: DeployFunction = async (hre: HardhatRuntimeEnv
     let wethAddress: string;
     let dWETH: DToken;
     let dUSDC: DToken;
-    let thurmanGov: ThurmanGovernor;
-    let thurman: ThurmanToken;
     let timelock: ThurmanTimelock;
 
     const Polemarch = await ethers.getContractFactory("Polemarch");
@@ -220,17 +251,159 @@ const upgradePolemarchOwnerRepay: DeployFunction = async (hre: HardhatRuntimeEnv
   if (developmentChains.includes(network.name)) {
     polemarchAddress = polemarch.address;
   } else {
-    polemarchAddress = polemarchUpgradeConfig[network.name]["Polemarch"].address;
+    const configAddress = polemarchUpgradeConfig[network.name]?.["Polemarch"]?.address;
+    if (!configAddress || configAddress.trim() === "") {
+      throw new Error(`Polemarch address not configured for network: ${network.name}`);
+    }
+    polemarchAddress = configAddress.trim();
+  }
+
+  // Validate address format
+  try {
+    polemarchAddress = ethers.utils.getAddress(polemarchAddress);
+  } catch (error) {
+    throw new Error(`Invalid Polemarch address for network ${network.name}: ${polemarchAddress}`);
+  }
+
+  log(`Upgrading Polemarch at address: ${polemarchAddress}`);
+  
+  // Verify the address has code (is a contract)
+  const code = await ethers.provider.getCode(polemarchAddress);
+  if (code === "0x") {
+    throw new Error(`No contract code found at address: ${polemarchAddress}`);
+  }
+  
+  // Verify the proxy address is valid and get current implementation
+  try {
+    const currentImpl = await upgrades.erc1967.getImplementationAddress(polemarchAddress);
+    log(`Current Polemarch implementation: ${currentImpl}`);
+  } catch (error: any) {
+    throw new Error(`Invalid proxy address or not a proxy: ${polemarchAddress}. Error: ${error.message}`);
   }
 
   const Polemarch = await ethers.getContractFactory("Polemarch");
-  polemarch = await upgrades.upgradeProxy(
-    polemarchAddress, 
-    Polemarch
-  );
+  
+  try {
+    log("Performing Polemarch upgrade...");
+    polemarch = await upgrades.upgradeProxy(
+      polemarchAddress, 
+      Polemarch
+    );
 
-  await polemarch.deployTransaction.wait(1);
-  log("Upgraded the implementation of Polemarch with ownerRepay function");
+    if (!polemarch.deployTransaction) {
+      throw new Error("Polemarch upgrade transaction not found");
+    }
+
+    if (!polemarch.deployTransaction.hash) {
+      throw new Error("Polemarch upgrade transaction hash not found");
+    }
+
+    log(`Waiting for Polemarch upgrade transaction: ${polemarch.deployTransaction.hash}`);
+    await polemarch.deployTransaction.wait(1);
+    log("Upgraded the implementation of Polemarch with ownerRepay function");
+  } catch (error: any) {
+    log(`Error upgrading Polemarch: ${error.message}`);
+    throw error;
+  }
+
+  // Upgrade ThurmanToken
+  let thurmanTokenAddress: string | undefined;
+  if (developmentChains.includes(network.name)) {
+    thurmanTokenAddress = thurman.address;
+  } else {
+    const configAddress = thurmanTokenAddressConfig[network.name]?.address;
+    thurmanTokenAddress = configAddress && configAddress.trim() !== "" ? configAddress.trim() : undefined;
+  }
+
+  if (thurmanTokenAddress) {
+    try {
+      // Validate address format
+      thurmanTokenAddress = ethers.utils.getAddress(thurmanTokenAddress);
+      
+      log(`Upgrading ThurmanToken at address: ${thurmanTokenAddress}`);
+      const ThurmanToken = await ethers.getContractFactory("ThurmanToken");
+      const upgradedThurman = await upgrades.upgradeProxy(
+        thurmanTokenAddress,
+        ThurmanToken,
+        {
+          unsafeAllow: ['missing-initializer-call'],
+          unsafeSkipStorageCheck: true
+        }
+      );
+
+      if (!upgradedThurman.deployTransaction || !upgradedThurman.deployTransaction.hash) {
+        throw new Error("ThurmanToken upgrade transaction not found or invalid");
+      }
+
+      log(`Waiting for ThurmanToken upgrade transaction: ${upgradedThurman.deployTransaction.hash}`);
+      await upgradedThurman.deployTransaction.wait(1);
+      log("Upgraded the implementation of ThurmanToken");
+
+      if (
+        !developmentChains.includes(network.name) &&
+        process.env.ETHERSCAN_API_KEY
+      ) {
+        await verify(upgradedThurman.address, []);
+      }
+    } catch (error: any) {
+      log(`Error upgrading ThurmanToken: ${error.message}`);
+      throw error;
+    }
+  } else {
+    log(`Skipping ThurmanToken upgrade - address not configured for ${network.name}`);
+  }
+
+  // Upgrade ThurmanGovernor2
+  let thurmanGovAddress: string | undefined;
+  if (developmentChains.includes(network.name)) {
+    // In development, upgrade the ThurmanGovernor we just deployed to ThurmanGovernor2
+    thurmanGovAddress = thurmanGov.address;
+  } else {
+    const configAddress = governorAddressConfig[network.name]?.address;
+    thurmanGovAddress = configAddress && configAddress.trim() !== "" ? configAddress.trim() : undefined;
+  }
+
+  if (thurmanGovAddress) {
+    try {
+      // Validate address format
+      thurmanGovAddress = ethers.utils.getAddress(thurmanGovAddress);
+      
+      const currentImplementation = await upgrades.erc1967.getImplementationAddress(thurmanGovAddress);
+      log(`The current implementation address of ThurmanGovernor is ${currentImplementation}`);
+
+      log(`Upgrading ThurmanGovernor2 at address: ${thurmanGovAddress}`);
+      const ThurmanGov2 = await ethers.getContractFactory("ThurmanGovernor2");
+      thurmanGov2 = await upgrades.upgradeProxy(
+        thurmanGovAddress,
+        ThurmanGov2,
+        {
+          unsafeAllow: ['constructor', 'missing-initializer']
+        }
+      );
+
+      if (!thurmanGov2.deployTransaction || !thurmanGov2.deployTransaction.hash) {
+        throw new Error("ThurmanGovernor2 upgrade transaction not found or invalid");
+      }
+
+      log(`Waiting for ThurmanGovernor2 upgrade transaction: ${thurmanGov2.deployTransaction.hash}`);
+      await thurmanGov2.deployTransaction.wait(1);
+      log("Upgraded the implementation of ThurmanGovernor to ThurmanGovernor2");
+      const newImplementation = await upgrades.erc1967.getImplementationAddress(thurmanGovAddress);
+      log(`The new implementation address is ${newImplementation}`);
+
+      if (
+        !developmentChains.includes(network.name) &&
+        process.env.ETHERSCAN_API_KEY
+      ) {
+        await verify(thurmanGov2.address, []);
+      }
+    } catch (error: any) {
+      log(`Error upgrading ThurmanGovernor2: ${error.message}`);
+      throw error;
+    }
+  } else {
+    log(`Skipping ThurmanGovernor2 upgrade - address not configured for ${network.name}`);
+  }
 
   if (
     !developmentChains.includes(network.name) &&
