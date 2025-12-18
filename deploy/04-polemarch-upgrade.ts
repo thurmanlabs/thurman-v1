@@ -91,144 +91,15 @@ const TIMELOCK_MIN_DELAY = 0;
 const developmentChains = ["hardhat", "localhost"];
 
 const upgradePolemarchWithdrawals: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  let polemarch: Polemarch;
-  let sToken: SToken;
-  let gToken: GToken;
-  let sWETH: SToken;
-  let gWETH: GToken;
-
-  const { deployments, network } = hre;
-  const { deploy, log } = deployments;
-  const [deployer, ...users]: SignerWithAddress[] = await ethers.getSigners();
-  console.log("deployer address: ", deployer.address);
-  const chainId: number = network.config.chainId!;
-  console.log("chainId: ", chainId);
-
-  if (developmentChains.includes(network.name)) {
-    let weth: WETH9;
-    let wethAddress: string;
-    // let sWETH: SToken;
-    let dWETH: DToken;
-    // let gWETH: GToken;
-    // let sUSDC: SToken;
-    let dUSDC: DToken;
-    // let gUSDC: GToken;
-    let thurmanGov: ThurmanGovernor;
-    let thurman: ThurmanToken;
-    let timelock: ThurmanTimelock;
-
-    const Polemarch = await ethers.getContractFactory("Polemarch");
-    polemarch = await upgrades.deployProxy(Polemarch, []);
-    await polemarch.deployTransaction.wait(1);
-    log(`[polemarch address]: ${polemarch.address}`);
-    const SToken = await ethers.getContractFactory("SToken");
-    const DToken = await ethers.getContractFactory("DToken");
-    const GToken = await ethers.getContractFactory("GToken");
-    const Thurman = await ethers.getContractFactory("ThurmanToken");
-
-    const Weth = await ethers.getContractFactory("WETH9");
-    weth = await Weth.deploy();
-    wethAddress = weth.address;
-
-    log("Creating a new instance of sWETH and dWETH tokens with deployer");
-
-    sWETH = await upgrades.deployProxy(SToken, [
-      polemarch.address,
-      "sWETH",
-      "S_WETH",
-      WETH_DECIMALS,
-      deployer.address,
-      weth.address,
-    ]);
-    await sWETH.deployTransaction.wait(1);
-    dWETH = await upgrades.deployProxy(DToken, [
-      polemarch.address,
-      "dWETH",
-      "D_WETH",
-      WETH_DECIMALS,
-      deployer.address,
-      weth.address,
-    ]);
-    await dWETH.deployTransaction.wait(1);
-
-    gWETH = await upgrades.deployProxy(GToken, [
-      polemarch.address,
-      "gWETH",
-      "G_WETH",
-      WETH_DECIMALS,
-      deployer.address,
-      weth.address,
-    ]);
-    await gWETH.deployed();
-
-    const tx = await polemarch.addExchequer(
-      weth.address, 
-      sWETH.address, 
-      dWETH.address, 
-      gWETH.address, 
-      WETH_DECIMALS, 
-      parseEther("0.05")
-    );
-    await tx.wait();
-    let exchequer: Types.ExchequerStruct = await polemarch.getExchequer(wethAddress);
-    log(`weth exchequer: ${exchequer}`);
-
-    thurman = await upgrades.deployProxy(Thurman, [
-      polemarch.address,
-      "thurman",
-      "THURM",
-      WETH_DECIMALS,
-    ]);
-    await thurman.deployTransaction.wait(1);
-
-    const Timelock = await ethers.getContractFactory("ThurmanTimelock");
-    timelock = await upgrades.deployProxy(Timelock, [
-      TIMELOCK_MIN_DELAY,
-      [deployer.address],
-      [deployer.address],
-      deployer.address,
-    ]);
-    await timelock.deployTransaction.wait(1);
-
-    const ThurmanGov = await ethers.getContractFactory("ThurmanGovernor");
-    thurmanGov = await upgrades.deployProxy(ThurmanGov, [
-      thurman.address,
-      timelock.address,
-      "ThurmanDAO",
-      upgradeConfig[network.name].govVotingDelay,
-      upgradeConfig[network.name].govVotingPeriod,
-      upgradeConfig[network.name].govProposalThreshold
-    ]);
-    await thurmanGov.deployTransaction.wait(1);
-
-    await timelock.grantRole(ethers.utils.id("TIMELOCK_ADMIN_ROLE"), thurmanGov.address);
-    await timelock.grantRole(ethers.utils.id("PROPOSER_ROLE"), thurmanGov.address);
-    await timelock.grantRole(ethers.utils.id("EXECUTOR_ROLE"), thurmanGov.address);
-  }
-
-  let polemarchAddress: string;
-  
-  if (developmentChains.includes(network.name)) {
-    polemarchAddress = polemarch.address;
-  } else {
-    polemarchAddress = polemarchUpgradeConfig[network.name]["Polemarch"].address;
-  }
-
+  const { network, ethers } = hre;
   const Polemarch = await ethers.getContractFactory("Polemarch");
-  polemarch = await upgrades.upgradeProxy(
-    polemarchAddress, 
+  const polemarchAddress = polemarchUpgradeConfig[network.name]["Polemarch"].address;
+  const polemarch = await upgrades.upgradeProxy(
+    polemarchAddress,
     Polemarch
   );
-
   await polemarch.deployTransaction.wait(1);
-  log("Upgraded the implementation of Polemarch");
-
-  if (
-    !developmentChains.includes(network.name) &&
-    process.env.ETHERSCAN_API_KEY
-  ) {
-    await verify(polemarch.address, []);
-  } 
+  console.log("Upgraded the implementation of Polemarch with withdrawals function");
 }
 
 export default upgradePolemarchWithdrawals;
